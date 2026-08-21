@@ -4,7 +4,9 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CallToAction from '../components/CallToAction.astro';
 import Faq from '../components/Faq.astro';
 import RelatedServices from '../components/RelatedServices.astro';
-import { required, type Service } from '../data/business.ts';
+import ServiceIcon from '../components/ServiceIcon.astro';
+import SideCall from '../components/SideCall.astro';
+import { required, business, type Service } from '../data/business.ts';
 import { breadcrumbs, faqPage, graph, hvacBusiness, service as serviceNode } from '../lib/schema.ts';
 
 interface Props {
@@ -33,6 +35,22 @@ const nodes = [
 if (faq.length > 0) nodes.push(faqPage(faq));
 
 const jsonLd = graph(nodes);
+
+/*
+ * Разделы страницы услуги нумеруются подряд — как порты на коллекторе.
+ * Номер считается здесь, а не пишется руками: FAQ появляется не везде,
+ * и при ручной нумерации на половине страниц был бы пропуск.
+ */
+const titles = [
+  'Что входит в работу',
+  'Что не входит и считается отдельно',
+  'От чего зависит цена',
+  'Сколько занимает по времени',
+  'Чем заканчивается дешёвая работа',
+  ...(faq.length > 0 ? ['Частые вопросы'] : []),
+  'Позвонить или написать',
+];
+const no = (title: string) => String(titles.indexOf(title) + 1).padStart(2, '0');
 ---
 
 <Base
@@ -41,86 +59,202 @@ const jsonLd = graph(nodes);
   path={path}
   jsonLd={jsonLd}
 >
-  <div class="wrap service-page">
-    <Breadcrumbs trail={trail} />
+  <div class="wrap shell">
+   <div class="page service-page">
+    <header class="service-head">
+      <Breadcrumbs trail={trail} />
 
-    <h1>{service.h1}</h1>
+      <p class="service-head__kind">
+        <ServiceIcon domain={service.domain} />
+        <span class="inst">
+          {service.domain === 'ac' ? 'Кондиционеры' : 'Котлы'} · {business.address.addressLocality}
+        </span>
+      </p>
 
-    <slot name="intro" />
+      <h1>{service.h1}</h1>
 
-    <section class="block">
+      <div class="service-head__intro lede">
+        <slot name="intro" />
+      </div>
+    </header>
+
+    <div class="scale" role="presentation"></div>
+
+    <section class="block reveal">
+      <p class="eyebrow inst">{no('Что входит в работу')} · Работа</p>
       <h2>Что входит в работу</h2>
       <slot name="included" />
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">{no('Что не входит и считается отдельно')} · Отдельно</p>
       <h2>Что не входит и считается отдельно</h2>
       <slot name="extra" />
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">{no('От чего зависит цена')} · Цена</p>
       <h2>От чего зависит цена</h2>
       <slot name="price" />
       <div class="offer service-page__offer">
         <p class="inst service-page__offer-label">Цена за 10 минут</p>
         <p class="service-page__offer-text">
-          Пришлите фото в Telegram — отвечу ценой за десять минут, без выезда на замер.
+          Пришлите фото в {business.telegram.label} — отвечу ценой за десять минут,
+          без выезда на замер.
         </p>
       </div>
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">{no('Сколько занимает по времени')} · Время</p>
       <h2>Сколько занимает по времени</h2>
       <slot name="time" />
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">{no('Чем заканчивается дешёвая работа')} · Цена ошибки</p>
       <h2>Чем заканчивается дешёвая работа</h2>
       <slot name="mistakes" />
     </section>
 
     {
       faq.length > 0 && (
-        <section class="block">
+        <section class="block reveal">
+          <p class="eyebrow inst">{no('Частые вопросы')} · Вопросы</p>
           <h2>Частые вопросы</h2>
           <Faq items={faq} />
         </section>
       )
     }
 
-    <section class="block">
-      <h2>Позвонить или написать</h2>
-      <CallToAction label="Ответ за 10 минут" />
+    <section class="block reveal">
+      <div class="panel service-page__final">
+        <p class="eyebrow inst">{no('Позвонить или написать')} · Связь</p>
+        <h2>Позвонить или написать</h2>
+        <CallToAction label="Ответ за 10 минут" />
+      </div>
     </section>
 
     <RelatedServices current={service.slug} />
+   </div>
+
+   <SideCall />
   </div>
 </Base>
 
 <style>
-  .service-page {
-    padding-block: var(--sp-m) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-m);
+  /*
+   * Две колонки с 75rem: текст держит меру, справа встаёт липкий блок связи.
+   * Ниже этой ширины колонка одна — grid просто не получает вторую дорожку.
+   */
+  .shell {
+    display: grid;
+    align-items: start;
+    min-inline-size: 0;
   }
 
-  .service-page h1 {
-    margin-block: var(--sp-2xs) 0;
+  /*
+   * Обязательно: у элемента грида min-width: auto, и широкая таблица внутри
+   * статьи раздвигала дорожку по своему min-content — вместо того чтобы
+   * прокручиваться внутри .scroll. Документ становился шире вьюпорта на
+   * 171 px при 360 px. Тот же дефект, из-за которого когда-то появился
+   * `npm run viewport`; он же его и поймал.
+   */
+  .shell > * {
+    min-inline-size: 0;
   }
 
-  .block {
+  @media (width >= 75rem) {
+    .shell {
+      grid-template-columns: minmax(0, 1fr) 17rem;
+      gap: var(--sp-l);
+    }
+  }
+
+  .service-head {
     display: flex;
     flex-direction: column;
     gap: var(--sp-2xs);
   }
 
-  .block h2 {
+  .service-head__kind {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2xs);
+    margin: 0;
+    color: var(--c-accent);
+  }
+
+  .service-head h1 {
+    margin-block: var(--sp-3xs) 0;
+    max-inline-size: 20ch;
+  }
+
+  /*
+   * Вводный абзац крупнее основного текста: он единственное место, где
+   * страница услуги говорит своими словами, а не по разделам.
+   */
+  .service-head__intro :global(p) {
+    font-size: var(--fs-300);
+    color: var(--c-muted);
+    margin: 0;
+  }
+
+  .block > h2 {
     font-size: var(--fs-400);
-    margin-block-end: 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
+    margin-block-end: var(--sp-3xs);
     max-inline-size: var(--measure);
+  }
+
+  /*
+   * Списки внутри слотов получают приборные маркеры, а не типографские
+   * точки: галка — то, что делается, риска — то, что считается отдельно.
+   * Слоты приходят из страниц, поэтому селекторы глобальные.
+   */
+  .block :global(ul) {
+    list-style: none;
+    padding: 0;
+  }
+
+  .block :global(ul > li) {
+    position: relative;
+    padding-inline-start: 1.75rem;
+  }
+
+  .block :global(ul > li)::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.15rem;
+    inset-block-start: 0.72em;
+    inline-size: 0.75rem;
+    block-size: 2px;
+    background: var(--c-rule);
+  }
+
+  /* Нумерованный порядок работ — номера остаются номерами, но приборные. */
+  .block :global(ol) {
+    list-style: none;
+    padding: 0;
+    counter-reset: step;
+  }
+
+  .block :global(ol > li) {
+    position: relative;
+    padding-inline-start: 2.5rem;
+    counter-increment: step;
+  }
+
+  .block :global(ol > li)::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0.15em;
+    font-family: var(--font-inst);
+    font-size: var(--fs-inst);
+    font-weight: 500;
+    letter-spacing: var(--tracking-inst);
+    font-variant-numeric: tabular-nums;
+    color: var(--c-accent);
   }
 
   .service-page__offer {
@@ -134,5 +268,15 @@ const jsonLd = graph(nodes);
 
   .service-page__offer-text {
     margin: 0;
+  }
+
+  .service-page__final {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .service-page__final h2 {
+    margin-block-end: var(--sp-2xs);
   }
 </style>

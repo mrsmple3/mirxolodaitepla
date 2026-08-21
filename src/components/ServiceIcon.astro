@@ -1,0 +1,59 @@
+---
+import type { Domain } from '../data/business.ts';
+
+interface Props {
+  domain: Domain;
+}
+
+const { domain } = Astro.props;
+
+/*
+ * Знаки услуг нарисованы на том же языке, что и знак сайта: одна толщина
+ * штриха, скруглённые концы, сетка 24×24, ни одной заливки. Цвет берётся
+ * от currentColor — акцент задаёт карточка, а не иконка.
+ *
+ * Декорация: смысл несёт заголовок карточки, поэтому aria-hidden.
+ */
+---
+
+<svg
+  class="glyph"
+  viewBox="0 0 24 24"
+  width="24"
+  height="24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {
+    domain === 'ac' ? (
+      <>
+        {/* Внутренний блок и три потока холодного воздуха из жалюзи. */}
+        <rect x="2.5" y="4" width="19" height="7.5" rx="1.75" />
+        <path d="M5.5 9.25h13" />
+        <path d="M7 14.5c1.6 0 1.6 2 3.2 2" />
+        <path d="M12.4 15.5c1.6 0 1.6 2 3.2 2" />
+        <path d="M9.7 18.5c1.6 0 1.6 2 3.2 2" />
+      </>
+    ) : (
+      <>
+        {/* Корпус котла, пламя горелки, подача и обратка. */}
+        <rect x="4" y="2.5" width="16" height="13" rx="2" />
+        <path d="M12 6.2c1.9 1.5 2.8 2.9 2.8 4.2a2.8 2.8 0 0 1-5.6 0c0-1.3.9-2.7 2.8-4.2Z" />
+        <path d="M8.5 15.5v3.2a2 2 0 0 0 2 2h1" />
+        <path d="M15.5 15.5v5.2" />
+      </>
+    )
+  }
+</svg>
+
+<style>
+  .glyph {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    flex: none;
+  }
+</style>

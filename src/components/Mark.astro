@@ -1,0 +1,49 @@
+---
+import { marks, MARK } from '../../scripts/brand/marks.mjs';
+
+interface Props {
+  /**
+   * Размер знака. Не произвольное число: два размера, оба классом.
+   * Инлайновый style на сайте запрещён (.htmlvalidate.json, no-inline-style),
+   * и это правило удобно — размеров знака ровно столько, сколько мест.
+   */
+  size?: 'm' | 's';
+}
+
+const { size = 'm' } = Astro.props;
+
+/*
+ * Знак «Контур» берётся из того же модуля, что рисует фавиконки и og-карточку
+ * (scripts/brand/marks.mjs). Не копия: если знак переключат одним словом в MARK
+ * и прогонят `npm run brand`, шапка поедет вместе с иконками, а не разойдётся
+ * с ними. Цвета подставляются токенами — сезон красит знак в шапке ровно так же,
+ * как в фавиконке.
+ */
+const svg = marks[MARK]({ ink: 'currentColor', accent: 'var(--c-accent)' });
+---
+
+<svg
+  class:list={['mark', `mark--${size}`]}
+  viewBox="0 0 32 32"
+  width="32"
+  height="32"
+  aria-hidden="true"
+  set:html={svg}
+/>
+
+<style>
+  .mark {
+    flex: none;
+    color: var(--c-graphite);
+  }
+
+  .mark--m {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+  }
+
+  .mark--s {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+  }
+</style>

@@ -14,10 +14,19 @@ const { label, showHours = true } = Astro.props;
 <div class="cta">
   {label && <p class="inst cta__label">{label}</p>}
 
+  {/*
+    Номер вынесен в отдельный span не для красоты: строкой целиком кнопка
+    держала `white-space: nowrap` и на 320 px вылезала за край экрана
+    (поймал `npm run viewport`). Теперь переносится подпись, а сам номер
+    остаётся неразрывным — разорванный телефон читается как две цифры.
+  */}
   <div class="cta__actions">
-    <a class="btn" href={telHref}>Позвонить&nbsp;{phoneDisplay}</a>
-    <a class="btn btn--ghost" href={business.telegram.url} rel="noopener">
-      Написать в {business.telegram.label}
+    <a class="btn cta__call" href={telHref}>
+      <span>Позвонить</span>
+      <span class="cta__number">{phoneDisplay}</span>
+    </a>
+    <a class="btn btn--ghost cta__call" href={business.telegram.url} rel="noopener">
+      <span>Написать в {business.telegram.label}</span>
     </a>
   </div>
 
@@ -50,6 +59,16 @@ const { label, showHours = true } = Astro.props;
 
   .cta__actions .btn {
     flex: 1 1 15rem;
+  }
+
+  .cta__call {
+    flex-wrap: wrap;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .cta__number {
+    white-space: nowrap;
   }
 
   .cta__hours {

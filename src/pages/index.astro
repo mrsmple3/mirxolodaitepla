@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import CallToAction from '../components/CallToAction.astro';
+import Dial from '../components/Dial.astro';
+import SectionHead from '../components/SectionHead.astro';
 import ServiceCard from '../components/ServiceCard.astro';
 import { business, serviceGroups } from '../data/business.ts';
 import { articles } from '../data/articles.ts';
@@ -32,6 +34,32 @@ const summaries: Record<string, string> = {
     'Монтаж, обвязка контура, дымоход, группа безопасности, опрессовка и пуск. Работаю с газовым оборудованием.',
 };
 
+/*
+ * Три показания первого экрана. Ни одно не придумано: всё это сказано
+ * словами ниже по странице и на /o-mastere/. Здесь они вынесены наверх,
+ * потому что до текста доходит не каждый, а до трёх строк — почти все.
+ */
+const facts = [
+  { value: 'Сам', label: 'Без бригады и посредников' },
+  { value: '24/7', label: 'Ночной вызов — обычный вызов' },
+  { value: '10 мин', label: 'Ответ ценой по фото в Telegram' },
+];
+
+const objections = [
+  {
+    q: '«В магазине монтаж бесплатный»',
+    a: 'Бесплатный монтаж — это базовый комплект: пара кронштейнов, короткая трасса и стандартное подключение. Обычно в него заложено около трёх метров трассы. Всё, что дальше, считают отдельно, и узнаёте вы об этом на месте — когда коробка уже вскрыта, а бригада стоит в коридоре. Отдельно идут штробление, короб, работа с автовышки или с промальпом, зимний комплект, откачка и дозаправка фреона. Я называю всё это до выезда, по фотографии.',
+  },
+  {
+    q: '«Непонятно, сколько выйдет в итоге»',
+    a: 'Цена собирается из вещей, которые видно на снимке: этаж и есть ли доступ к наружной стене, длина трассы от внутреннего блока до наружного, из чего стена, нужно ли штробить, нужен ли короб, не висит ли место под блоком над окном соседа или над проездом. Поэтому прайса на сайте нет: цифра «от» не говорит ничего, а две фотографии говорят всё. Пришлите их в Telegram — отвечу за десять минут.',
+  },
+  {
+    q: '«Страшно за стену и за соседей снизу»',
+    a: 'Сначала разметка и поиск проводки: сверлить вслепую нельзя. Отверстие идёт с уклоном наружу, чтобы конденсат уходил на улицу. Трасса режется по месту, концы развальцовываются под нужный конус — перетянутая вальцовка трескается не сразу, а через два-три месяца, и искать такую утечку дороже, чем сделать сразу. Дальше система стоит под азотом, пока не станет видно, что она держит давление. Потом вакуумирование: оно убирает из трассы воздух и влагу, потому что влага вместе с фреоном и маслом даёт кислоту, а кислота съедает обмотку компрессора. Дренаж кладётся с уклоном не меньше трёх миллиметров на метр — иначе вода рано или поздно найдёт дорогу к соседям.',
+  },
+];
+
 const steps = [
   {
     title: 'Звонок или фото в Telegram',
@@ -61,34 +89,59 @@ const jsonLd = graph([hvacBusiness()]);
 <Base title={title} description={description} path="/" jsonLd={jsonLd}>
   {/* ── Первый экран ─────────────────────────────────────────── */}
   <section class="hero">
-    <div class="wrap">
-      <h1>Установка и обслуживание кондиционеров и котлов в Ташкенте</h1>
-
-      <p class="hero__lead">
-        Меня зовут {business.master.firstName}. Работаю сам, без бригады и посредников:
-        кто взял трубку — тот и приедет. Выезжаю по Ташкенту.
-      </p>
-
-      <div class="offer hero__offer">
-        <p class="inst hero__offer-label">Цена за 10 минут</p>
-        <p class="hero__offer-text">
-          Пришлите в Telegram фото стены под внутренний блок и места под наружный.
-          Отвечу ценой за десять минут — без выезда на замер.
+    <div class="wrap hero__grid">
+      <div class="hero__intro">
+        <p class="inst hero__place">
+          {business.address.addressLocality} · выезд по городу
         </p>
+
+        <h1 class="hero__title">
+          Установка и обслуживание кондиционеров и котлов в {business.address.addressLocality}е
+        </h1>
+
+        <p class="hero__lead">
+          Меня зовут {business.master.firstName}. Работаю сам, без бригады и посредников:
+          кто взял трубку — тот и приедет. Выезжаю по {business.address.addressLocality}у.
+        </p>
+
+        <div class="offer hero__offer">
+          <p class="inst hero__offer-label">Цена за 10 минут</p>
+          <p class="hero__offer-text">
+            Пришлите в {business.telegram.label} фото стены под внутренний блок и места
+            под наружный. Отвечу ценой за десять минут — без выезда на замер.
+          </p>
+        </div>
+
+        {/*
+          На мобиле кнопки первого экрана не дублируются: те же два действия
+          постоянно висят в нижней полосе вызова, в зоне большого пальца.
+        */}
+        <div class="hero__cta">
+          <CallToAction showHours={false} />
+        </div>
       </div>
 
       {/*
-        На мобиле кнопки первого экрана не дублируются: те же два действия
-        постоянно висят в нижней полосе вызова, в зоне большого пальца.
+        Прибор первого экрана. Ниже 48rem снят намеренно: там его место
+        занимает сам текст, а полоса вызова и так держит оба действия.
       */}
-      <div class="hero__cta">
-        <CallToAction showHours={false} />
+      <div class="hero__figure">
+        <Dial />
       </div>
+    </div>
 
-      <p class="hero__hours">
-        <span class="inst">00:00–23:59</span>
-        <span>Круглосуточно, без выходных</span>
-      </p>
+    {/* Три показания вместо трёх абзацев про надёжность. */}
+    <div class="wrap">
+      <ul class="facts reveal-set">
+        {
+          facts.map((f) => (
+            <li class="fact">
+              <span class="fact__value">{f.value}</span>
+              <span class="fact__label">{f.label}</span>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </section>
 
@@ -97,12 +150,19 @@ const jsonLd = graph([hvacBusiness()]);
   {/* ── Услуги ───────────────────────────────────────────────── */}
   <section class="section">
     <div class="wrap">
-      <h2>Что я делаю</h2>
+      <div class="reveal">
+        <SectionHead
+          eyebrow="01 · Услуги"
+          title="Что я делаю"
+          lede="Кондиционеры и котлы — обе половины года. Порядок на странице переставляет сезон."
+        />
+      </div>
+
       {
         groups.map((group) => (
           <div class="services">
             <p class="inst services__label">{group.label}</p>
-            <div class="grid-cards">
+            <div class="grid-cards reveal-set">
               {group.services.map((service) => (
                 <ServiceCard service={service} summary={summaries[service.slug] ?? ''} />
               ))}
@@ -117,46 +177,27 @@ const jsonLd = graph([hvacBusiness()]);
 
   {/* ── Возражения ───────────────────────────────────────────── */}
   <section class="section">
-    <div class="wrap objections">
-      <h2>Три вопроса, которые задают чаще всего</h2>
+    <div class="wrap">
+      <div class="reveal">
+        <SectionHead
+          eyebrow="02 · Возражения"
+          title="Три вопроса, которые задают чаще всего"
+        />
+      </div>
 
-      <article class="objection">
-        <h3>«В магазине монтаж бесплатный»</h3>
-        <p>
-          Бесплатный монтаж — это базовый комплект: пара кронштейнов, короткая трасса и
-          стандартное подключение. Обычно в него заложено около трёх метров трассы. Всё,
-          что дальше, считают отдельно, и узнаёте вы об этом на месте — когда коробка уже
-          вскрыта, а бригада стоит в коридоре. Отдельно идут штробление, короб, работа с
-          автовышки или с промальпом, зимний комплект, откачка и дозаправка фреона.
-          Я называю всё это до выезда, по фотографии.
-        </p>
-      </article>
-
-      <article class="objection">
-        <h3>«Непонятно, сколько выйдет в итоге»</h3>
-        <p>
-          Цена собирается из вещей, которые видно на снимке: этаж и есть ли доступ к
-          наружной стене, длина трассы от внутреннего блока до наружного, из чего стена,
-          нужно ли штробить, нужен ли короб, не висит ли место под блоком над окном соседа
-          или над проездом. Поэтому прайса на сайте нет: цифра «от» не говорит ничего, а
-          две фотографии говорят всё. Пришлите их в Telegram — отвечу за десять минут.
-        </p>
-      </article>
-
-      <article class="objection">
-        <h3>«Страшно за стену и за соседей снизу»</h3>
-        <p>
-          Сначала разметка и поиск проводки: сверлить вслепую нельзя. Отверстие идёт с
-          уклоном наружу, чтобы конденсат уходил на улицу. Трасса режется по месту, концы
-          развальцовываются под нужный конус — перетянутая вальцовка трескается не сразу,
-          а через два-три месяца, и искать такую утечку дороже, чем сделать сразу. Дальше
-          система стоит под азотом, пока не станет видно, что она держит давление. Потом
-          вакуумирование: оно убирает из трассы воздух и влагу, потому что влага вместе с
-          фреоном и маслом даёт кислоту, а кислота съедает обмотку компрессора. Дренаж
-          кладётся с уклоном не меньше трёх миллиметров на метр — иначе вода рано или
-          поздно найдёт дорогу к соседям.
-        </p>
-      </article>
+      <div class="objections">
+        {
+          objections.map((o, i) => (
+            <article class="qa reveal">
+              <div class="qa__side">
+                <span class="inst qa__no">{String(i + 1).padStart(2, '0')}</span>
+                <h3 class="qa__q">{o.q}</h3>
+              </div>
+              <p class="qa__a">{o.a}</p>
+            </article>
+          ))
+        }
+      </div>
     </div>
   </section>
 
@@ -165,15 +206,22 @@ const jsonLd = graph([hvacBusiness()]);
   {/* ── Как проходит работа ──────────────────────────────────── */}
   <section class="section">
     <div class="wrap">
-      <h2>Как проходит работа</h2>
+      <div class="reveal">
+        <SectionHead
+          eyebrow="03 · Порядок работы"
+          title="Как проходит работа"
+          lede="От звонка до замера температуры на выходе — пять шагов, каждый со своей проверкой."
+        />
+      </div>
+
       <ol class="steps">
         {
           steps.map((step, i) => (
-            <li class="step">
+            <li>
               <span class="inst step__no">{String(i + 1).padStart(2, '0')}</span>
-              <div class="step__body">
-                <h3 class="step__title">{step.title}</h3>
-                <p class="step__text">{step.text}</p>
+              <div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
               </div>
             </li>
           ))
@@ -187,16 +235,23 @@ const jsonLd = graph([hvacBusiness()]);
   {/* ── Разборы ──────────────────────────────────────────────── */}
   <section class="section">
     <div class="wrap">
-      <h2>Разборы: что можно понять до вызова мастера</h2>
-      <p class="posts__lead">
-        Пять статей про то, что чаще всего спрашивают по телефону. Половина случаев
-        решается своими руками за пять минут — про это тоже написано.
-      </p>
-      <ul class="posts">
+      <div class="reveal">
+        <SectionHead
+          eyebrow="04 · Разборы"
+          title="Что можно понять до вызова мастера"
+          lede="Пять статей про то, что чаще всего спрашивают по телефону. Половина случаев решается своими руками за пять минут — про это тоже написано."
+        />
+      </div>
+
+      <ul class="posts reveal-set">
         {
-          articles.map((a) => (
-            <li>
-              <a href={`/blog/${a.slug}/`}>{a.h1}</a>
+          articles.map((a, i) => (
+            <li class="post card lift">
+              <span class="inst post__no">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="post__title">
+                <a href={`/blog/${a.slug}/`}>{a.h1}</a>
+              </h3>
+              <p class="post__lede">{a.lede}</p>
             </li>
           ))
         }
@@ -204,35 +259,79 @@ const jsonLd = graph([hvacBusiness()]);
     </div>
   </section>
 
-  <div class="scale" role="presentation"></div>
-
   {/* ── Финальный блок связи ─────────────────────────────────── */}
   <section class="section">
     <div class="wrap">
-      <h2>Позвоните или пришлите фото</h2>
-      <p class="final__text">
-        Если кондиционер не морозит или в котле упало давление — звоните сразу, разберём по
-        телефону, что можно проверить до выезда. Котёл потух ночью — звоните ночью, график
-        круглосуточный. Если нужен монтаж — отправьте фото, и я назову цену.
-      </p>
-      <CallToAction label="Ответ за 10 минут" />
+      <div class="final panel reveal">
+        <p class="inst eyebrow">05 · Связь</p>
+        <h2 class="final__title">Позвоните или пришлите фото</h2>
+        <p class="final__text">
+          Если кондиционер не морозит или в котле упало давление — звоните сразу, разберём
+          по телефону, что можно проверить до выезда. Котёл потух ночью — звоните ночью,
+          график круглосуточный. Если нужен монтаж — отправьте фото, и я назову цену.
+        </p>
+        <CallToAction label="Ответ за 10 минут" />
+      </div>
     </div>
   </section>
 </Base>
 
 <style>
+  /* ── Первый экран ───────────────────────────────────────────── */
   .hero {
-    padding-block: var(--sp-m) var(--sp-m);
+    padding-block: var(--sp-l) var(--sp-m);
   }
 
-  @media (width >= 60rem) {
-    .hero {
-      padding-block-start: var(--sp-l);
+  .hero__grid {
+    display: grid;
+    gap: var(--sp-m);
+    align-items: center;
+  }
+
+  /*
+   * Прибор появляется с 48rem. Ниже он не «уменьшается», а снимается:
+   * на телефоне первый экран должен доводить до кнопки, а не до картинки.
+   */
+  .hero__figure {
+    display: none;
+  }
+
+  @media (width >= 48rem) {
+    .hero__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+      gap: var(--sp-l);
     }
+
+    .hero__figure {
+      display: grid;
+      justify-items: center;
+      min-inline-size: 0;
+    }
+  }
+
+  .hero__intro {
+    min-inline-size: 0;
+  }
+
+  .hero__place {
+    margin-block: 0 var(--sp-2xs);
+  }
+
+  /*
+   * Заголовок работает картинкой: фотографий у сайта нет, и первый экран
+   * держится на кегле и на прибое рядом. Он же LCP — поэтому никаких
+   * анимаций прозрачности на самом тексте, только сдвиг всего блока.
+   */
+  .hero__title {
+    font-size: var(--fs-700);
+    letter-spacing: -0.025em;
+    margin-block-end: var(--sp-s);
+    max-inline-size: 18ch;
   }
 
   .hero__lead {
     font-size: var(--fs-300);
+    color: var(--c-muted);
     margin-block-end: var(--sp-m);
   }
 
@@ -260,15 +359,46 @@ const jsonLd = graph([hvacBusiness()]);
     }
   }
 
-  .hero__hours {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--sp-3xs) var(--sp-2xs);
+  /* ── Показания ──────────────────────────────────────────────── */
+  .facts {
+    list-style: none;
+    padding: 0;
     margin-block: var(--sp-m) 0;
-    font-weight: 700;
+    max-inline-size: none;
+    display: grid;
+    gap: var(--sp-s);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   }
 
+  .facts li + li {
+    margin-block-start: 0;
+  }
+
+  /* Кромка сверху вместо заливки — правило §11.4.5. */
+  .fact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3xs);
+    min-inline-size: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+  }
+
+  .fact__value {
+    font-family: var(--font-inst);
+    font-size: var(--fs-400);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .fact__label {
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  /* ── Услуги ─────────────────────────────────────────────────── */
   .services {
     margin-block-start: var(--sp-m);
   }
@@ -279,83 +409,127 @@ const jsonLd = graph([hvacBusiness()]);
     border-block-end: 1px solid var(--c-rule);
   }
 
+  /* ── Возражения ─────────────────────────────────────────────── */
   .objections {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-m);
+    gap: var(--sp-l);
+    margin-block-start: var(--sp-m);
   }
 
-  .objection h3 {
-    font-size: var(--fs-300);
-    margin-block-end: var(--sp-2xs);
-  }
-
-  .objection p {
-    margin: 0;
-  }
-
-  .steps {
-    list-style: none;
-    padding: 0;
-    margin-block: var(--sp-m) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-m);
-    max-inline-size: var(--measure);
-  }
-
-  .step {
+  /*
+   * Вопрос и ответ разведены по колонкам: вопрос остаётся заголовком слева,
+   * ответ держит свою меру справа. Одной колонкой это читалось сплошным
+   * текстом — ровно то, из-за чего страница выглядела статьёй.
+   */
+  .qa {
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
     gap: var(--sp-2xs);
-    align-items: start;
-  }
-
-  .step + .step {
-    margin-block-start: 0;
-  }
-
-  .step__no {
-    padding-block-start: 0.35rem;
-  }
-
-  .step__title {
-    font-size: var(--fs-300);
-    margin-block-end: var(--sp-3xs);
-  }
-
-  .step__text {
-    margin: 0;
-  }
-
-  .posts__lead {
-    margin-block-end: var(--sp-s);
-  }
-
-  .posts {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: var(--sp-2xs) var(--sp-m);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-    max-inline-size: var(--content-max);
-  }
-
-  .posts li {
-    margin-block-start: 0;
-    padding-block-start: var(--sp-2xs);
+    padding-block-start: var(--sp-s);
     border-block-start: 1px solid var(--c-rule);
   }
 
-  .posts a {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: 1.75rem;
-    font-weight: 700;
+  @media (width >= 60rem) {
+    .qa {
+      grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+      gap: var(--sp-l);
+    }
+  }
+
+  .qa__side {
+    min-inline-size: 0;
+  }
+
+  .qa__no {
+    display: block;
+    margin-block-end: var(--sp-3xs);
+  }
+
+  .qa__q {
+    font-size: var(--fs-300);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .qa__a {
+    margin: 0;
+    color: var(--c-muted);
+    min-inline-size: 0;
+  }
+
+  /* ── Разборы ────────────────────────────────────────────────── */
+  .posts {
+    list-style: none;
+    padding: 0;
+    margin-block: var(--sp-m) 0;
+    max-inline-size: none;
+    display: grid;
+    gap: var(--sp-s);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  .posts li + li {
+    margin-block-start: 0;
+  }
+
+  .post {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3xs);
+    min-inline-size: 0;
+    border-block-start: 3px solid var(--c-brass);
+  }
+
+  .post__no {
+    color: var(--c-muted);
+  }
+
+  .post__title {
+    font-size: var(--fs-300);
+    margin: 0;
+  }
+
+  .post__title a {
+    text-decoration: none;
+  }
+
+  /*
+   * Ссылка растянута на всю карточку: цель нажатия — карточка, а не строчка
+   * заголовка. Текст остаётся ссылкой для скринридера, накладка — пустая.
+   */
+  .post__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+  }
+
+  .post {
+    position: relative;
+  }
+
+  .post:hover .post__title a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .post__lede {
+    margin: 0;
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  /* ── Финал ──────────────────────────────────────────────────── */
+  .final {
+    max-inline-size: none;
+  }
+
+  .final__title {
+    margin-block-end: var(--sp-2xs);
   }
 
   .final__text {
     margin-block-end: var(--sp-m);
+    color: var(--c-muted);
   }
 </style>

@@ -22,18 +22,23 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
   <div class="wrap page">
     <Breadcrumbs trail={trail} />
 
-    <h1>Кондиционеры и котлы: разборы мастера</h1>
+    <header class="blog-head">
+      <p class="eyebrow inst">Блог · {articles.length} разбора</p>
+      <h1>Кондиционеры и котлы: разборы мастера</h1>
+      <p class="lede">
+        Пять разборов вместо тридцати статей. Каждый отвечает на один вопрос, который мне
+        задают по телефону чаще всего, и написан так, чтобы после него стало понятно,
+        нужен мастер или нет.
+      </p>
+    </header>
 
-    <p class="lead">
-      Пять разборов вместо тридцати статей. Каждый отвечает на один вопрос, который мне
-      задают по телефону чаще всего, и написан так, чтобы после него стало понятно, нужен
-      мастер или нет.
-    </p>
+    <div class="scale" role="presentation"></div>
 
-    <ul class="posts">
+    <ul class="posts reveal-set">
       {
-        articles.map((a) => (
-          <li class="card post">
+        articles.map((a, i) => (
+          <li class="card lift post">
+            <span class="inst post__no">{String(i + 1).padStart(2, '0')}</span>
             <h2 class="post__title">
               <a href={`/blog/${a.slug}/`}>{a.h1}</a>
             </h2>
@@ -43,7 +48,8 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       }
     </ul>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">Зачем</p>
       <h2>Зачем это здесь</h2>
       <p>
         Часть вызовов снимается по телефону, а иногда и вовсе без мастера: промыть
@@ -57,8 +63,10 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
         или нет. Где нужен — там прямо сказано, почему это не делается своими руками:
         вакуумный насос, азот и манометрический коллектор дома не держат.
       </p>
+    </section>
 
-      <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">Чего нет</p>
       <h2>Чего здесь нет</h2>
       <p>
         Обзоров моделей и советов, какой бренд лучше. Я не продаю технику, а ставлю и чиню
@@ -69,44 +77,47 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
         Ещё здесь не будет тридцати статей. Пять — это то, что действительно спрашивают.
         Всё остальное было бы текстом ради текста, а его в интернете и так достаточно.
       </p>
-      </section>
     </section>
 
-    <section class="block">
-      <h2>Не нашли свой случай?</h2>
-      <p>
-        Позвоните и опишите словами, что происходит. Разберём по телефону: если можно
-        обойтись без выезда, я так и скажу.
-      </p>
-      <CallToAction label="Ответ за 10 минут" />
+    <section class="block reveal">
+      <div class="panel">
+        <p class="eyebrow inst">Связь</p>
+        <h2>Не нашли свой случай?</h2>
+        <p>
+          Позвоните и опишите словами, что происходит. Разберём по телефону: если можно
+          обойтись без выезда, я так и скажу.
+        </p>
+        <CallToAction label="Ответ за 10 минут" />
+      </div>
     </section>
   </div>
 </Base>
 
 <style>
-  .page {
-    padding-block: var(--sp-m) 0;
+  .blog-head {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-m);
+    gap: var(--sp-2xs);
   }
 
-  .page h1 {
-    margin-block: var(--sp-2xs) 0;
+  .blog-head h1 {
+    margin-block: var(--sp-3xs) 0;
+    max-inline-size: 20ch;
   }
 
-  .lead {
-    font-size: var(--fs-300);
-  }
-
+  /*
+   * Разборы стоят сеткой, а не колонкой: пять пунктов списком читались
+   * оглавлением статьи, а карточками — набором ответов, из которого
+   * выбирают свой.
+   */
   .posts {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
+    max-inline-size: none;
+    display: grid;
     gap: var(--sp-s);
-    max-inline-size: var(--measure);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   }
 
   .posts li {
@@ -114,23 +125,38 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
   }
 
   .post {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3xs);
+    min-inline-size: 0;
     border-block-start: 3px solid var(--c-brass);
+  }
+
+  .post__no {
+    color: var(--c-muted);
   }
 
   .post__title {
     font-size: var(--fs-300);
-    margin-block-end: var(--sp-3xs);
+    margin: 0;
   }
 
   .post__title a {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: 1.75rem;
     text-decoration: none;
   }
 
-  .post__title a:hover {
+  /* Цель нажатия — карточка целиком, а не строчка заголовка. */
+  .post__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+  }
+
+  .post:hover .post__title a {
     text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   .post__lede {
@@ -139,17 +165,9 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
     font-size: var(--fs-100);
   }
 
-  .block {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2xs);
-  }
-
-  .block h2 {
+  .block > h2 {
     font-size: var(--fs-400);
-    margin-block-end: 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
+    margin-block-end: var(--sp-2xs);
     max-inline-size: var(--measure);
   }
 </style>

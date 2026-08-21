@@ -1,5 +1,8 @@
 ---
 import '../styles/tokens.css';
+import '../styles/motion.css';
+import Backdrop from '../components/Backdrop.astro';
+import Mark from '../components/Mark.astro';
 import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
 import { absoluteUrl } from '../data/site.ts';
 
@@ -77,13 +80,25 @@ const pageLinks = [
   <body>
     <a class="skip-link" href="#main">Перейти к содержанию</a>
 
+    <Backdrop />
+
+    {/*
+      Шкала прочитанного. Стрелка прибора по верхней кромке: привязана к
+      позиции прокрутки через scroll(), а не ко времени, поэтому не крутит
+      кадры на месте. Без поддержки scroll-driven animations её просто нет.
+    */}
+    <div class="progress" aria-hidden="true"></div>
+
     <header class="site-header">
       <div class="wrap site-header__inner">
         <div class="site-header__top">
-          <a class="site-header__name" href="/">{business.name}</a>
+          <a class="site-header__name" href="/">
+            <Mark />
+            <span>{business.name}</span>
+          </a>
 
           <a class="site-header__phone" href={telHref}>
-            <span class="inst inst--muted site-header__label">Позвонить</span>
+            <span class="inst inst--muted site-header__label">Круглосуточно</span>
             <span class="site-header__number">{phoneDisplay}</span>
           </a>
         </div>
@@ -129,7 +144,10 @@ const pageLinks = [
     <footer class="site-footer">
       <div class="wrap site-footer__inner">
         <address class="site-footer__nap">
-          <p class="site-footer__name">{business.name}</p>
+          <p class="site-footer__name">
+            <Mark size="s" />
+            <span>{business.name}</span>
+          </p>
           <p>
             Мастер {business.master.firstName}, {business.address.addressLocality}.
             {business.areaServedText}.
@@ -163,7 +181,22 @@ const pageLinks = [
     <style>
       /* ── Шапка ──────────────────────────────────────────────── */
       .site-header {
+        position: relative;
+        z-index: 10;
         background: var(--c-surface);
+      }
+
+      /*
+       * Липкой шапка становится только на десктопе. На телефоне её место
+       * в зоне большого пальца уже занято полосой вызова, и вторая
+       * закреплённая полоса съела бы экран с обеих сторон.
+       */
+      @media (width >= 60rem) {
+        .site-header {
+          position: sticky;
+          inset-block-start: 0;
+          box-shadow: 0 1px 0 var(--c-hairline);
+        }
       }
 
       .site-header__inner {
@@ -183,12 +216,17 @@ const pageLinks = [
       .site-header__name {
         display: inline-flex;
         align-items: center;
+        gap: var(--sp-2xs);
         min-block-size: var(--tap-min);
         color: var(--c-graphite);
         font-size: var(--fs-300);
         font-weight: 700;
         letter-spacing: -0.01em;
         text-decoration: none;
+      }
+
+      .site-header__name:hover {
+        color: var(--c-graphite);
       }
 
       .site-nav {
@@ -208,7 +246,12 @@ const pageLinks = [
         margin-block-start: 0;
       }
 
+      /*
+       * Подчёркивание — отдельная кромка, а не text-decoration: она умеет
+       * выезжать слева направо и не дёргает базовую линию при наведении.
+       */
       .site-nav a {
+        position: relative;
         display: inline-flex;
         align-items: center;
         min-block-size: var(--tap-min);
@@ -217,14 +260,34 @@ const pageLinks = [
         text-decoration: none;
       }
 
+      .site-nav a::after {
+        content: '';
+        position: absolute;
+        inset-block-end: 0.55rem;
+        inset-inline: 0;
+        block-size: 2px;
+        background: currentColor;
+        scale: 0 1;
+        transform-origin: 0 50%;
+        transition: scale var(--dur-base) var(--ease-out);
+      }
+
       .site-nav a:hover {
         color: var(--c-accent-hover);
-        text-decoration: underline;
+      }
+
+      .site-nav a:hover::after {
+        scale: 1 1;
       }
 
       .site-nav a[aria-current='page'] {
         color: var(--c-graphite);
         font-weight: 700;
+      }
+
+      .site-nav a[aria-current='page']::after {
+        background: var(--c-brass);
+        scale: 1 1;
       }
 
       .site-header__phone {
@@ -290,8 +353,12 @@ const pageLinks = [
       }
 
       .site-footer__name {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2xs);
         font-size: var(--fs-200);
         font-weight: 700;
+        color: var(--c-dial);
       }
 
       /* Цель нажатия не меньше 24 px (WCAG 2.5.8). */

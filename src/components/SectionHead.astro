@@ -1,0 +1,17 @@
+---
+interface Props {
+  /** Приборная подпись над заголовком: номер раздела или короткая метка. */
+  eyebrow?: string;
+  title: string;
+  /** Одна фраза под заголовком. Не обязательна. */
+  lede?: string;
+}
+
+const { eyebrow, title, lede } = Astro.props;
+---
+
+<div class="sec-head">
+  {eyebrow && <p class="eyebrow inst">{eyebrow}</p>}
+  <h2>{title}</h2>
+  {lede && <p class="lede">{lede}</p>}
+</div>

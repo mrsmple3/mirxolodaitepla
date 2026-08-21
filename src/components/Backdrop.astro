@@ -1,0 +1,18 @@
+---
+/*
+ * Фон-прибор. Четыре пустых слоя, всё рисуют градиенты и маски в motion.css:
+ * ни картинок, ни запросов, ни байта JS.
+ *
+ * Лежит на `position: fixed; z-index: -1` с `contain: strict`, поэтому
+ * не участвует в раскладке и не может дать сдвиг макета. Для чтения с экрана
+ * его нет — это фактура, а не содержание.
+ */
+---
+
+<div class="backdrop" aria-hidden="true">
+  <div class="backdrop__layer backdrop__wash"></div>
+  <div class="backdrop__layer backdrop__grid"></div>
+  <div class="backdrop__layer backdrop__sweep"></div>
+  <div class="backdrop__layer backdrop__dial"></div>
+  <div class="backdrop__layer backdrop__dial backdrop__dial--inner"></div>
+</div>

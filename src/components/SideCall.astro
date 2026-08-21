@@ -1,0 +1,100 @@
+---
+import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
+
+/*
+ * Липкий блок связи для широких экранов.
+ *
+ * Поставлен не ради красоты: на странице услуги текст держит свою меру в
+ * 66 знаков, и справа от него на десктопе оставалось пустое поле в треть
+ * экрана. Туда уходит то, ради чего сайт существует, — телефон.
+ *
+ * Ниже 75rem блок не показывается вовсе: на планшете и телефоне колонки нет,
+ * а звонок там уже держит нижняя полоса вызова (SPEC §11.5).
+ */
+---
+
+<aside class="rail" aria-label="Связаться с мастером">
+  <div class="rail__card">
+    <p class="eyebrow inst">Цена за 10 минут</p>
+
+    <p class="rail__text">
+      Пришлите фото в {business.telegram.label} — отвечу ценой за десять минут,
+      без выезда на замер.
+    </p>
+
+    <a class="btn rail__btn" href={telHref}>
+      <span>Позвонить</span>
+      <span class="rail__number">{phoneDisplay}</span>
+    </a>
+
+    <a class="btn btn--ghost rail__btn" href={business.telegram.url} rel="noopener">
+      <span>Написать в {business.telegram.label}</span>
+    </a>
+
+    <p class="rail__hours">
+      <span class="inst inst--muted">00:00–23:59</span>
+      <span>{openingHoursText}. {business.areaServedText}.</span>
+    </p>
+  </div>
+</aside>
+
+<style>
+  .rail {
+    display: none;
+  }
+
+  /*
+   * 75rem — ширина, на которой рядом с мерой текста помещается колонка
+   * в 17rem и остаётся воздух. Ниже неё блок не появляется.
+   */
+  @media (width >= 75rem) {
+    .rail {
+      display: block;
+      position: sticky;
+      /* Под липкой шапкой: её высота на десктопе плюс риски лимба. */
+      inset-block-start: var(--sp-xl);
+      min-inline-size: 0;
+    }
+  }
+
+  .rail__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+    padding: var(--sp-m);
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-block-start: 3px solid var(--c-brass);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+  }
+
+  .rail__text {
+    margin: 0 0 var(--sp-2xs);
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  .rail__btn {
+    flex-wrap: wrap;
+    white-space: normal;
+    text-align: center;
+    font-size: var(--fs-200);
+    padding-inline: var(--sp-s);
+  }
+
+  .rail__number {
+    white-space: nowrap;
+  }
+
+  .rail__hours {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3xs);
+    margin: var(--sp-2xs) 0 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 1px solid var(--c-rule);
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+</style>

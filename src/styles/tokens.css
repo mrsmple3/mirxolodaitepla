@@ -11,9 +11,13 @@
  *   3. Латунь никогда не набирает текст (3.26:1 на циферблате). Только линии.
  *   4. Моноширинная гарнитура не набирает заголовки. Только цифры, часы, телефон, подписи.
  *   5. Ни одной залитой цветом панели.
+ *
+ * Слой motion (src/styles/motion.css) добавлен вторым проходом: фон-прибор и
+ * скроллителлинг. Он идёт последним слоем и ничего не решает за контент —
+ * без поддержки браузера и при prefers-reduced-motion страница просто статична.
  */
 
-@layer tokens, base, layout, components;
+@layer tokens, base, layout, components, motion;
 
 /* ── Шрифты. Локальные, подмножество кириллица + латиница ─────────────── */
 
@@ -60,6 +64,17 @@
     --c-accent-hover: var(--c-low-hover);
     --c-accent-ink: var(--c-dial);
 
+    /*
+     * Промывки для фона-прибора. Держат правило §11.4.1: не заливка, а
+     * несколько процентов насыщенности, сквозь которые виден циферблат.
+     * Первая строка — запасная для браузеров без color-mix.
+     */
+    --c-wash: rgba(25, 30, 35, 0.05);
+    --c-wash: color-mix(in oklab, var(--c-accent) 8%, transparent);
+    --c-wash-soft: rgba(25, 30, 35, 0.025);
+    --c-wash-soft: color-mix(in oklab, var(--c-accent) 4%, transparent);
+    --c-hairline: rgba(25, 30, 35, 0.085);
+
     /* --- Типографика --- */
     --font-text: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-inst: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -70,6 +85,8 @@
     --fs-400: clamp(1.25rem, 1.13rem + 0.6vw, 1.5rem);
     --fs-500: clamp(1.5rem, 1.28rem + 1.1vw, 2rem);
     --fs-600: clamp(1.625rem, 1.32rem + 1.55vw, 2.75rem);
+    /* Крупный кегль первого экрана: заголовок работает картинкой, фотографий нет. */
+    --fs-700: clamp(2rem, 1.5rem + 2.6vw, 3.5rem);
 
     /* Приборный слой: мелко, с трекингом, капслоком */
     --fs-inst: 0.6875rem;
@@ -89,8 +106,20 @@
     --sp-xl: clamp(3rem, 2rem + 4vw, 4.5rem);
 
     --radius: 0.375rem;
+    --radius-l: 0.75rem;
     --content-max: 68rem;
     --tap-min: 2.75rem;
+
+    /*
+     * Тени. Прибор лежит на циферблате, а не парит: два слабых слоя графита,
+     * без цветных подсветок. Нужны, чтобы карточка читалась карточкой без заливки.
+     */
+    --shadow-1: 0 1px 1px rgba(25, 30, 35, 0.04), 0 2px 6px rgba(25, 30, 35, 0.05);
+    --shadow-2: 0 2px 4px rgba(25, 30, 35, 0.06), 0 10px 24px rgba(25, 30, 35, 0.09);
+
+    --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+    --dur-fast: 140ms;
+    --dur-base: 240ms;
 
     /* --- Сигнатура: риски приборного лимба --- */
     --scale-h: 14px;
@@ -225,6 +254,28 @@
     gap: var(--sp-s);
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
   }
+
+  /*
+   * Каркас внутренней страницы. Был скопирован в шести файлах подряд —
+   * собран сюда, чтобы отбивка разделов на всех страницах была одна и та же.
+   */
+  .page {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-l);
+  }
+
+  .page > h1 {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+    min-inline-size: 0;
+  }
 }
 
 @layer components {
@@ -241,6 +292,7 @@
       repeating-linear-gradient(90deg, var(--c-graphite) 0 1px, transparent 1px var(--scale-minor))
         0 100% / 100% calc(var(--scale-h) / 2) no-repeat;
     opacity: 0.75;
+    transform-origin: 0 50%;
   }
 
   /* Подпись приборного слоя: показание, а не заголовок. */
@@ -258,11 +310,53 @@
     color: var(--c-muted);
   }
 
+  /*
+   * Надзаголовок раздела: латунная риска и приборная подпись.
+   * Одна и та же метка на всех страницах — по ней раздел опознаётся
+   * раньше, чем прочитан заголовок.
+   */
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2xs);
+    margin-block: 0 var(--sp-2xs);
+    max-inline-size: var(--measure);
+  }
+
+  .eyebrow::before {
+    content: '';
+    flex: none;
+    inline-size: 1.75rem;
+    block-size: 2px;
+    background: var(--c-brass);
+  }
+
+  /* Заголовок раздела: та же отбивка везде, включая содержимое статей. */
+  .sec-head {
+    max-inline-size: var(--measure);
+    margin-block-end: var(--sp-2xs);
+  }
+
+  .sec-head > h2,
+  .sec-head > h3 {
+    margin-block-end: 0;
+  }
+
+  .sec-head > .lede {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .lede {
+    font-size: var(--fs-300);
+    color: var(--c-muted);
+    max-inline-size: var(--measure);
+  }
+
   .skip-link {
     position: absolute;
     inset-block-start: 0;
     inset-inline-start: 0;
-    z-index: 10;
+    z-index: 40;
     padding: var(--sp-2xs) var(--sp-s);
     background: var(--c-graphite);
     color: var(--c-dial);
@@ -289,29 +383,47 @@
     font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
+    box-shadow: var(--shadow-1);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      translate var(--dur-base) var(--ease-out);
   }
 
   .btn:hover {
     background: var(--c-accent-hover);
     border-color: var(--c-accent-hover);
     color: var(--c-accent-ink);
+    box-shadow: var(--shadow-2);
+    translate: 0 -1px;
+  }
+
+  .btn:active {
+    translate: 0 0;
+    box-shadow: var(--shadow-1);
   }
 
   .btn--ghost {
     background: transparent;
     color: var(--c-accent);
+    box-shadow: none;
   }
 
   .btn--ghost:hover {
     background: transparent;
     color: var(--c-accent-hover);
+    box-shadow: var(--shadow-1);
   }
 
   /* Оффер: латунная риска слева, без заливки цветом. */
   .offer {
+    position: relative;
     border-inline-start: 3px solid var(--c-brass);
     background: var(--c-surface);
     padding: var(--sp-s) var(--sp-m);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    box-shadow: var(--shadow-1);
   }
 
   .card {
@@ -319,6 +431,119 @@
     border: 1px solid var(--c-rule);
     border-radius: var(--radius);
     padding: var(--sp-s) var(--sp-m) var(--sp-m);
+    box-shadow: var(--shadow-1);
+  }
+
+  /*
+   * Панель — крупный блок на белом, шире карточки. Заливки цветом нет
+   * (§11.4.5): поверхность белая, работает только кромка и тень.
+   */
+  .panel {
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius-l);
+    /*
+     * Боковой отступ начинается с --sp-s: на 320 px панель с отступом
+     * в --sp-m съедала столько ширины, что кнопка с номером не помещалась.
+     */
+    padding: var(--sp-m) clamp(var(--sp-s), 4vw, var(--sp-l));
+    box-shadow: var(--shadow-1);
+  }
+
+  /*
+   * Списки с приборными маркерами. Латунная галка — «входит»,
+   * графитовая риска — «считается отдельно». Маркер несёт смысл,
+   * поэтому у него есть текстовая пара в заголовке раздела.
+   */
+  .list-tick,
+  .list-dash {
+    list-style: none;
+    padding: 0;
+    margin-block: 0 var(--sp-s);
+    max-inline-size: var(--measure);
+  }
+
+  .list-tick > li,
+  .list-dash > li {
+    position: relative;
+    padding-inline-start: 1.75rem;
+  }
+
+  .list-tick > li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.15rem;
+    inset-block-start: 0.55em;
+    inline-size: 0.5rem;
+    block-size: 0.28rem;
+    border-inline-start: 2px solid var(--c-brass);
+    border-block-end: 2px solid var(--c-brass);
+    rotate: -45deg;
+  }
+
+  .list-dash > li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.15rem;
+    inset-block-start: 0.72em;
+    inline-size: 0.75rem;
+    block-size: 2px;
+    background: var(--c-rule);
+  }
+
+  /*
+   * Ступени работы. Вертикальная трасса слева, номера — риски на ней.
+   * Линия дорисовывается по мере прокрутки (motion.css), но и без анимации
+   * стоит на месте целиком.
+   */
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+    max-inline-size: var(--measure);
+  }
+
+  .steps > li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.75rem 1fr;
+    gap: var(--sp-2xs) var(--sp-s);
+    align-items: start;
+    margin-block-start: 0;
+  }
+
+  /* Отрезок трассы от номера к следующему номеру. */
+  .steps > li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    inset-block: 2.75rem calc(-1 * var(--sp-m));
+    inset-inline-start: 1.3rem;
+    inline-size: 2px;
+    background: var(--c-rule);
+  }
+
+  .steps .step__no {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 2px solid var(--c-brass);
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-graphite);
+    font-size: var(--fs-100);
+  }
+
+  .steps h3 {
+    font-size: var(--fs-300);
+    margin-block: 0.35rem var(--sp-3xs);
+  }
+
+  .steps p {
+    margin: 0;
   }
 }
 

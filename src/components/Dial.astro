@@ -1,0 +1,172 @@
+---
+/*
+ * Манометр первого экрана.
+ *
+ * Фотографий у сайта нет и в ближайшее время не будет (SPEC §2), поэтому
+ * визуальный якорь приходится рисовать. Взят тот же предмет, что дал имя
+ * всей системе: коллектор, который мастер вешает на блок первым делом.
+ *
+ * Рисунок построен по сетке, а не набран на глаз: 270° развёртки, риска
+ * каждые 5.4°, каждая пятая — длинная и латунная. Стрелка отрабатывает
+ * включение (motion.css), лимб доворачивается от прокрутки.
+ *
+ * Декорация: aria-hidden, из дерева доступности убран целиком.
+ */
+
+/** Развёртка шкалы: от -225° до +45°, как у настоящего прибора. */
+const START = -225;
+const SWEEP = 270;
+const COUNT = 51;
+
+const ticks = Array.from({ length: COUNT }, (_, i) => {
+  const major = i % 5 === 0;
+  const angle = START + (SWEEP / (COUNT - 1)) * i;
+  const rad = (angle * Math.PI) / 180;
+  const outer = 88;
+  const inner = major ? 74 : 81;
+  return {
+    major,
+    x1: +(100 + outer * Math.cos(rad)).toFixed(2),
+    y1: +(100 + outer * Math.sin(rad)).toFixed(2),
+    x2: +(100 + inner * Math.cos(rad)).toFixed(2),
+    y2: +(100 + inner * Math.sin(rad)).toFixed(2),
+  };
+});
+
+/** Дуга рабочего диапазона: те же 62% шкалы, что показывает стрелка. */
+const arcRadius = 64;
+const arcSweep = 168;
+const arcFrom = ((START + 10) * Math.PI) / 180;
+const arcTo = ((START + 10 + arcSweep) * Math.PI) / 180;
+const arcPath = [
+  `M ${(100 + arcRadius * Math.cos(arcFrom)).toFixed(2)} ${(100 + arcRadius * Math.sin(arcFrom)).toFixed(2)}`,
+  `A ${arcRadius} ${arcRadius} 0 ${arcSweep > 180 ? 1 : 0} 1`,
+  `${(100 + arcRadius * Math.cos(arcTo)).toFixed(2)} ${(100 + arcRadius * Math.sin(arcTo)).toFixed(2)}`,
+].join(' ');
+
+/** Длина дуги — для отрисовки штрихом. Считается здесь, а не в браузере. */
+const arcLength = Math.round((2 * Math.PI * arcRadius * arcSweep) / 360);
+
+/** Стрелка стоит на 62% шкалы — там же, где кончается дуга. */
+const needleAngle = START + SWEEP * 0.62;
+---
+
+<svg
+  class="dial"
+  viewBox="0 0 200 200"
+  width="200"
+  height="200"
+  fill="none"
+  aria-hidden="true"
+>
+  <g class="dial__limb">
+    <circle cx="100" cy="100" r="95" class="dial__ring" />
+    <circle cx="100" cy="100" r="70" class="dial__ring dial__ring--inner" />
+    {
+      ticks.map((t) => (
+        <line
+          x1={t.x1}
+          y1={t.y1}
+          x2={t.x2}
+          y2={t.y2}
+          class={t.major ? 'dial__tick dial__tick--major' : 'dial__tick'}
+        />
+      ))
+    }
+  </g>
+
+  {/*
+    Штрих задан атрибутами, а не инлайновым style: инлайновый style на сайте
+    запрещён (.htmlvalidate.json), а stroke-dasharray и stroke-dashoffset —
+    обычные презентационные атрибуты SVG. Анимация в motion.css уводит
+    dashoffset в ноль от того значения, что стоит здесь.
+  */}
+  <path
+    class="dial__arc"
+    d={arcPath}
+    stroke-dasharray={arcLength}
+    stroke-dashoffset={arcLength}
+  />
+
+  {/*
+    Два вложенных поворота, и это не лишнее: внешний ставит стрелку на
+    показание и остаётся статикой, внутренний отыгрывает включение прибора.
+    Одной группой не обойтись — анимация rotate перебила бы установленный угол
+    и увела стрелку в ноль.
+  */}
+  <g class="dial__aim" transform={`rotate(${needleAngle + 90} 100 100)`}>
+    <g class="dial__needle">
+      <line x1="100" y1="100" x2="100" y2="38" class="dial__pointer" />
+      <line x1="100" y1="100" x2="100" y2="116" class="dial__tail" />
+    </g>
+  </g>
+
+  <circle cx="100" cy="100" r="9" class="dial__hub" />
+  <circle cx="100" cy="100" r="3.5" class="dial__pin" />
+</svg>
+
+<style>
+  .dial {
+    inline-size: 100%;
+    block-size: auto;
+    max-inline-size: 22rem;
+    overflow: visible;
+  }
+
+  .dial__ring {
+    stroke: var(--c-rule);
+    stroke-width: 1;
+  }
+
+  .dial__ring--inner {
+    stroke: var(--c-hairline);
+  }
+
+  .dial__tick {
+    stroke: var(--c-rule);
+    stroke-width: 1.5;
+  }
+
+  /* Латунь — только линия, текста ею не набирают (SPEC §11.4.3). */
+  .dial__tick--major {
+    stroke: var(--c-brass);
+    stroke-width: 2;
+  }
+
+  .dial__arc {
+    stroke: var(--c-accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+
+  .dial__pointer {
+    stroke: var(--c-graphite);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+  }
+
+  .dial__tail {
+    stroke: var(--c-graphite);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  .dial__hub {
+    fill: var(--c-graphite);
+  }
+
+  .dial__pin {
+    fill: var(--c-surface);
+  }
+
+  /*
+   * Поворот идёт вокруг центра циферблата, а не вокруг бокса элемента:
+   * fill-box у группы из двух линий дал бы точку вращения не на оси.
+   * У .dial__aim центр задан прямо в атрибуте rotate().
+   */
+  .dial__needle,
+  .dial__limb {
+    transform-box: view-box;
+    transform-origin: 100px 100px;
+  }
+</style>

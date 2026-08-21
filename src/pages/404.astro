@@ -14,13 +14,16 @@ const jsonLd = graph([hvacBusiness()]);
 
 <Base title={title} description={description} path="/404/" jsonLd={jsonLd} noindex={true}>
   <div class="wrap page">
-    <p class="inst">Ошибка 404</p>
-    <h1>Такой страницы нет</h1>
+    <header class="page-head">
+      <p class="eyebrow inst">Ошибка 404</p>
+      <h1>Такой страницы нет</h1>
+      <p class="lede">
+        Скорее всего, ссылка устарела или в адресе опечатка. Сайт маленький, потеряться в
+        нём трудно — вот всё, что на нём есть.
+      </p>
+    </header>
 
-    <p class="lead">
-      Скорее всего, ссылка устарела или в адресе опечатка. Сайт маленький, потеряться в
-      нём трудно — вот всё, что на нём есть.
-    </p>
+    <div class="scale" role="presentation"></div>
 
     <nav aria-label="Услуги">
       <ul class="links">
@@ -34,20 +37,22 @@ const jsonLd = graph([hvacBusiness()]);
       </ul>
     </nav>
 
-    <CallToAction label="Или просто позвоните" />
+    <div class="panel">
+      <p class="eyebrow inst">Связь</p>
+      <CallToAction label="Или просто позвоните" />
+    </div>
   </div>
 </Base>
 
 <style>
-  .page {
-    padding-block: var(--sp-l) 0;
+  .page-head {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-s);
+    gap: var(--sp-2xs);
   }
 
-  .lead {
-    font-size: var(--fs-300);
+  .page-head h1 {
+    margin-block: var(--sp-3xs) 0;
   }
 
   .links {
@@ -64,10 +69,20 @@ const jsonLd = graph([hvacBusiness()]);
     margin-block-start: 0;
   }
 
+  /* Ссылка занимает всю ячейку: на телефоне промахнуться мимо неё труднее. */
   .links a {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     min-block-size: var(--tap-min);
+    padding-inline: var(--sp-2xs);
+    border-block-start: 1px solid var(--c-rule);
     font-weight: 700;
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    border-block-start-color: var(--c-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 </style>

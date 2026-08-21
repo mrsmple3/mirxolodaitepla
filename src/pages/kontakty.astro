@@ -22,28 +22,39 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
   <div class="wrap page">
     <Breadcrumbs trail={trail} />
 
-    <h1>Как связаться</h1>
+    <header class="page-head">
+      <p class="eyebrow inst">Контакты · {business.address.addressLocality}</p>
+      <h1>Как связаться</h1>
+      <p class="lede">
+        Быстрее всего — позвонить. Если нужен монтаж и вы хотите знать цену заранее,
+        отправьте фото в {business.telegram.label}: так ответ будет точнее, чем на словах.
+      </p>
+    </header>
 
-    <p class="lead">
-      Быстрее всего — позвонить. Если нужен монтаж и вы хотите знать цену заранее,
-      отправьте фото в {business.telegram.label}: так ответ будет точнее, чем на словах.
-    </p>
-
-    <div class="contacts">
-      <div class="contact">
+    <div class="contacts reveal-set">
+      <div class="contact lift">
         <span class="inst inst--muted">Телефон</span>
         <a class="contact__value" href={telHref}>{phoneDisplay}</a>
         <span class="contact__note">Звонок — самый быстрый способ</span>
       </div>
 
-      <div class="contact">
+      <div class="contact lift">
         <span class="inst inst--muted">{business.telegram.label}</span>
         <a class="contact__value" href={business.telegram.url} rel="noopener">{phoneDisplay}</a>
         <span class="contact__note">Тот же номер. Сюда — фото для расчёта цены</span>
       </div>
+
+      <div class="contact contact--hours">
+        <span class="inst inst--muted">График</span>
+        <span class="contact__value contact__value--static">00:00–23:59</span>
+        <span class="contact__note">{openingHoursText}</span>
+      </div>
     </div>
 
-    <section class="block">
+    <div class="scale" role="presentation"></div>
+
+    <section class="block reveal">
+      <p class="eyebrow inst">01 · График</p>
       <h2>График</h2>
       <p>
         <strong>{openingHoursText}.</strong> Это не оборот речи: кондиционер встал в жару
@@ -52,7 +63,8 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       </p>
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">02 · Зона выезда</p>
       <h2>Куда выезжаю</h2>
       <p>
         {business.areaServedText}. Работаю по всему городу, отдельных «своих» районов у
@@ -65,7 +77,8 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       </p>
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">03 · Что быстрее</p>
       <h2>Позвонить или написать — что быстрее</h2>
       <p>
         <strong>Звоните, если что-то сломалось.</strong> Поломку быстрее разобрать
@@ -80,62 +93,87 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
         уточняющими вопросами, по фото — сразу.
       </p>
 
-      <section class="block">
+    </section>
+
+    <section class="block reveal">
+      <p class="eyebrow inst">04 · После звонка</p>
       <h2>Что происходит после звонка</h2>
-      <ol>
+      <ol class="flow">
         <li>Разбираемся, что случилось, и нужен ли выезд вообще.</li>
         <li>Если нужен — называю окно, в которое приеду, и цену или вилку по ней.</li>
         <li>Если по дороге задерживаюсь, звоню и говорю об этом, а не пропадаю.</li>
         <li>На месте показываю, что буду делать, до того как начну сверлить.</li>
         <li>Если вылезло что-то, чего не было видно на фото, называю новую цену сразу, а не в конце работы.</li>
       </ol>
-      </section>
+    </section>
 
+    <section class="block reveal">
+      <p class="eyebrow inst">05 · Что прислать</p>
       <h2>Что прислать, чтобы узнать цену</h2>
-      <ul>
+      <ul class="list-tick">
         <li><strong>Монтаж:</strong> фото стены под внутренний блок и фото места под наружный.</li>
         <li><strong>Поломка:</strong> марка, модель и код ошибки с дисплея, если он есть.</li>
         <li><strong>Котёл:</strong> фото котла целиком, шильдика с моделью и манометра.</li>
         <li><strong>Чистка:</strong> достаточно сказать тип блока и сколько их.</li>
       </ul>
-      <CallToAction label="Ответ за 10 минут" />
+    </section>
+
+    <section class="block reveal">
+      <div class="panel">
+        <p class="eyebrow inst">06 · Связь</p>
+        <h2>Позвоните или напишите</h2>
+        <CallToAction label="Ответ за 10 минут" />
+      </div>
     </section>
   </div>
 </Base>
 
 <style>
-  .page {
-    padding-block: var(--sp-m) 0;
+  .page-head {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-m);
+    gap: var(--sp-2xs);
   }
 
-  .page h1 {
-    margin-block: var(--sp-2xs) 0;
+  .page-head h1 {
+    margin-block: var(--sp-3xs) 0;
   }
 
-  .lead {
-    font-size: var(--fs-300);
-  }
-
+  /*
+   * Три плитки в ряд: телефон, мессенджер и график. График стоит рядом с
+   * контактами, а не только текстом ниже, — круглосуточность здесь такой же
+   * аргумент, как сам номер.
+   */
   .contacts {
     display: grid;
     gap: var(--sp-s);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-    max-inline-size: var(--measure);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    max-inline-size: none;
   }
 
   .contact {
     display: flex;
     flex-direction: column;
     gap: var(--sp-3xs);
+    min-inline-size: 0;
     padding: var(--sp-s) var(--sp-m);
     background: var(--c-surface);
     border: 1px solid var(--c-rule);
     border-block-start: 3px solid var(--c-brass);
     border-radius: var(--radius);
     color: var(--c-graphite);
+    box-shadow: var(--shadow-1);
+  }
+
+  /* Плитка графика ничего не открывает, поэтому не поднимается при наведении. */
+  .contact--hours {
+    border-block-start-color: var(--c-rule);
+  }
+
+  .contact__value--static {
+    font-family: var(--font-inst);
+    font-size: var(--fs-300);
+    letter-spacing: -0.01em;
   }
 
   .contact:has(.contact__value:hover) {
@@ -162,18 +200,36 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
     color: var(--c-muted);
   }
 
-  .block {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2xs);
+  .block > h2 {
+    font-size: var(--fs-400);
+    margin-block-end: var(--sp-2xs);
+    max-inline-size: var(--measure);
   }
 
-  .block h2 {
-    font-size: var(--fs-400);
-    margin-block-end: 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
-    max-inline-size: var(--measure);
+  /* Порядок после звонка — те же приборные номера, что на страницах услуг. */
+  .flow {
+    list-style: none;
+    padding: 0;
+    counter-reset: step;
+  }
+
+  .flow > li {
+    position: relative;
+    padding-inline-start: 2.5rem;
+    counter-increment: step;
+  }
+
+  .flow > li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0.15em;
+    font-family: var(--font-inst);
+    font-size: var(--fs-inst);
+    font-weight: 500;
+    letter-spacing: var(--tracking-inst);
+    font-variant-numeric: tabular-nums;
+    color: var(--c-accent);
   }
 
   .note {

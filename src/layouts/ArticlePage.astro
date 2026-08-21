@@ -2,6 +2,7 @@
 import Base from './Base.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CallToAction from '../components/CallToAction.astro';
+import SideCall from '../components/SideCall.astro';
 import { business } from '../data/business.ts';
 import type { Article } from '../data/articles.ts';
 import { blogPosting, breadcrumbs, graph, hvacBusiness } from '../lib/schema.ts';
@@ -46,23 +47,35 @@ const jsonLd = graph([
   jsonLd={jsonLd}
   ogType="article"
 >
-  <article class="wrap post">
-    <Breadcrumbs trail={trail} />
+  <div class="wrap shell">
+   <article class="page post">
+    <header class="post__head">
+      <Breadcrumbs trail={trail} />
 
-    <h1>{article.h1}</h1>
+      <p class="eyebrow inst">Разбор мастера</p>
 
-    <p class="post__meta">
-      <span class="inst inst--muted">
-        <time datetime={article.datePublished}>{published}</time>
-      </span>
-      <span class="post__author">{business.master.firstName}, мастер по кондиционерам и котлам</span>
-    </p>
+      <h1>{article.h1}</h1>
+
+      <p class="post__lede">{article.lede}</p>
+
+      <p class="post__meta">
+        <span class="inst inst--muted">
+          <time datetime={article.datePublished}>{published}</time>
+        </span>
+        <span class="post__author">
+          {business.master.firstName}, мастер по кондиционерам и котлам
+        </span>
+      </p>
+    </header>
+
+    <div class="scale" role="presentation"></div>
 
     <div class="post__body">
       <slot />
     </div>
 
-    <section class="post__next">
+    <section class="post__next panel reveal">
+      <p class="eyebrow inst">Что дальше</p>
       <h2>Что делать дальше</h2>
       <slot name="next" />
       {
@@ -75,20 +88,57 @@ const jsonLd = graph([
       }
       <CallToAction label="Ответ за 10 минут" />
     </section>
-  </article>
+   </article>
+
+   <SideCall />
+  </div>
 </Base>
 
 <style>
-  .post {
-    padding-block: var(--sp-m) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-s);
+  /* Та же двухколонная раскладка, что на страницах услуг. */
+  .shell {
+    display: grid;
+    align-items: start;
+    min-inline-size: 0;
   }
 
-  .post h1 {
-    margin-block: var(--sp-2xs) 0;
-    max-inline-size: var(--measure);
+  /*
+   * Обязательно: у элемента грида min-width: auto, и широкая таблица внутри
+   * статьи раздвигала дорожку по своему min-content — вместо того чтобы
+   * прокручиваться внутри .scroll. Документ становился шире вьюпорта на
+   * 171 px при 360 px. Тот же дефект, из-за которого когда-то появился
+   * `npm run viewport`; он же его и поймал.
+   */
+  .shell > * {
+    min-inline-size: 0;
+  }
+
+  @media (width >= 75rem) {
+    .shell {
+      grid-template-columns: minmax(0, 1fr) 17rem;
+      gap: var(--sp-l);
+    }
+  }
+
+  .post__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .post__head h1 {
+    margin-block: var(--sp-3xs) 0;
+    max-inline-size: 24ch;
+  }
+
+  /*
+   * Лид статьи — та же фраза, что стоит в списке блога. Берётся из данных,
+   * а не пишется второй раз: список и страница обязаны обещать одно и то же.
+   */
+  .post__lede {
+    font-size: var(--fs-300);
+    color: var(--c-muted);
+    margin: 0;
   }
 
   .post__meta {
@@ -112,12 +162,28 @@ const jsonLd = graph([
     gap: var(--sp-s);
   }
 
+  /*
+   * Латунная риска над заголовком раздела рисуется псевдоэлементом, а не
+   * рамкой: рамку нельзя прочертить по мере прокрутки, а отрезок — можно
+   * (motion.css). Без scroll-driven animations он просто стоит на месте.
+   */
   .post__body :global(h2) {
+    position: relative;
     font-size: var(--fs-400);
-    margin-block: var(--sp-s) 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
+    margin-block: var(--sp-m) 0;
+    padding-block-start: var(--sp-s);
     max-inline-size: var(--measure);
+  }
+
+  .post__body :global(h2)::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 100%;
+    block-size: 2px;
+    background: var(--c-brass);
+    transform-origin: 0 50%;
   }
 
   .post__body :global(h3) {
@@ -170,9 +236,11 @@ const jsonLd = graph([
 
   .post__next h2 {
     font-size: var(--fs-400);
-    margin-block-end: 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
+    margin-block-end: var(--sp-2xs);
     max-inline-size: var(--measure);
+  }
+
+  .post__next :global(p) {
+    color: var(--c-muted);
   }
 </style>

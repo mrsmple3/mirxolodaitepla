@@ -22,16 +22,21 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
   <div class="wrap page">
     <Breadcrumbs trail={trail} />
 
-    <h1>Кто приедет и как я работаю</h1>
-
-    <p class="lead">
+    <header class="page-head">
+      <p class="eyebrow inst">Мастер {business.master.firstName} · {business.address.addressLocality}</p>
+      <h1>Кто приедет и как я работаю</h1>
+      <p class="lede">
       Меня зовут {business.master.firstName}. Занимаюсь кондиционерами и котлами в
       {' '}{business.address.addressLocality}е, с газовым оборудованием работаю — допуск
       есть. Работаю сам: заявку принимаю я, приезжаю тоже я. Диспетчера, который обещает
-      одно, и бригады, которая делает другое, между нами нет.
-    </p>
+        одно, и бригады, которая делает другое, между нами нет.
+      </p>
+    </header>
 
-    <section class="block">
+    <div class="scale" role="presentation"></div>
+
+    <section class="block reveal">
+      <p class="eyebrow inst">01 · Прямо</p>
       <h2>Почему тут нет отзывов и фотографий</h2>
       <p>
         Потому что настоящих пока нет, а чужие ставить я не буду. Отзывы с чужих сайтов,
@@ -47,7 +52,8 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       </p>
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">02 · Порядок</p>
       <h2>Как идёт работа от звонка до пуска</h2>
       <ol class="steps">
         <li>
@@ -106,9 +112,10 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       </ol>
     </section>
 
-    <section class="block">
+    <section class="block reveal">
+      <p class="eyebrow inst">03 · Границы</p>
       <h2>За что я не берусь</h2>
-      <ul>
+      <ul class="list-dash">
         <li>
           <strong>Работу вслепую.</strong> Если по фотографии не видно, что происходит, я
           не называю цену наугад, чтобы получить заказ, а прошу нормальные снимки или
@@ -131,71 +138,40 @@ const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
       </ul>
     </section>
 
-    <section class="block">
-      <h2>Проверить меня на пяти минутах разговора</h2>
-      <CallToAction label="Ответ за 10 минут" />
+    <section class="block reveal">
+      <div class="panel">
+        <p class="eyebrow inst">04 · Связь</p>
+        <h2>Проверить меня на пяти минутах разговора</h2>
+        <CallToAction label="Ответ за 10 минут" />
+      </div>
     </section>
   </div>
 </Base>
 
 <style>
-  .page {
-    padding-block: var(--sp-m) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-m);
-  }
-
-  .page h1 {
-    margin-block: var(--sp-2xs) 0;
-  }
-
-  .lead {
-    font-size: var(--fs-300);
-  }
-
-  .block {
+  .page-head {
     display: flex;
     flex-direction: column;
     gap: var(--sp-2xs);
   }
 
-  .block h2 {
+  .page-head h1 {
+    margin-block: var(--sp-3xs) 0;
+    max-inline-size: 20ch;
+  }
+
+  .block > h2 {
     font-size: var(--fs-400);
-    margin-block-end: 0;
-    padding-block-start: var(--sp-2xs);
-    border-block-start: 2px solid var(--c-brass);
+    margin-block-end: var(--sp-2xs);
     max-inline-size: var(--measure);
   }
 
+  /*
+   * Ступени берутся общим компонентом из tokens.css: трасса, кружки-номера
+   * и дорисовка по прокрутке — те же, что на главной. Здесь только отступ,
+   * потому что список идёт сразу за заголовком раздела.
+   */
   .steps {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-m);
-    max-inline-size: var(--measure);
-  }
-
-  .steps li {
-    display: grid;
-    grid-template-columns: 2.5rem 1fr;
-    gap: var(--sp-2xs);
-    align-items: start;
-    margin-block-start: 0;
-  }
-
-  .steps h3 {
-    font-size: var(--fs-300);
-    margin-block-end: var(--sp-3xs);
-  }
-
-  .steps p {
-    margin: 0;
-  }
-
-  .step__no {
-    padding-block-start: 0.35rem;
+    margin-block-start: var(--sp-2xs);
   }
 </style>

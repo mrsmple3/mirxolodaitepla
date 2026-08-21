@@ -13,6 +13,18 @@ if (SITE_ORIGIN_IS_LOCAL) {
 
 export default defineConfig({
   site: SITE_ORIGIN,
+  /*
+   * Минификатор CSS переключён с lightningcss на esbuild намеренно.
+   *
+   * lightningcss сворачивает `animation-timeline` внутрь шортката `animation`
+   *   .reveal{animation:linear both reveal-rise view()}
+   * а браузеры такой шорткат не принимают: `animation` по спецификации не
+   * включает таймлайн. Объявление целиком становилось невалидным, и все
+   * скролл-анимации молча выключались — вёрстка при этом выглядела целой,
+   * потому что каждое правило написано так, чтобы без анимации страница
+   * оставалась собранной. Поймано замером computed-стилей, а не глазами.
+   */
+  vite: { build: { cssMinify: 'esbuild' } },
   output: 'static',
   trailingSlash: 'always',
   build: { format: 'directory', inlineStylesheets: 'always' },

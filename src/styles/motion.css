@@ -1,0 +1,481 @@
+/*
+ * Слой движения: фон-прибор и скроллителлинг.
+ *
+ * Три правила, из-за которых этот файл выглядит именно так:
+ *
+ * 1. Ноль JS. Появление блоков, дорисовка трассы, шкала прочитанного и фон
+ *    сделаны на scroll-driven animations — `animation-timeline: view()` и
+ *    `scroll()`. Скроллом управляет композитор браузера, главный поток не
+ *    участвует: это не даёт ни TBT, ни просадки по Lighthouse.
+ *
+ * 2. Текст никогда не становится прозрачным. Это не осторожность, а вывод
+ *    из замера: у таймлайна view() блок ниже сгиба стоит в начальном кадре
+ *    не доли секунды, а всё время, пока до него не долистали. Прозрачный
+ *    текст в этом кадре — это по-настоящему нечитаемый текст, и axe внутри
+ *    Lighthouse поймал его на /blog/besplatnyy-montazh-iz-magazina/:
+ *    контраст 1.13 при норме 4.5, Accessibility 96 вместо 100.
+ *    Поэтому всё, что содержит текст, появляется только сдвигом и масштабом.
+ *    Прозрачность осталась ровно у одного элемента — рисок лимба, где текста
+ *    нет вовсе.
+ *
+ *    Вторая страховка на месте: каждое правило лежит внутри
+ *    `@supports (animation-timeline: view())` и внутри
+ *    `prefers-reduced-motion: no-preference`. Браузер без поддержки и человек,
+ *    выключивший анимации, видят полностью собранную страницу.
+ *
+ * 3. Ни одна анимация не трогает геометрию — только transform и, у одного
+ *    декоративного элемента, opacity. Поэтому CLS остаётся нулевым, а работу
+ *    берёт на себя композитор. Фон вынесен в отдельный фиксированный слой
+ *    с `contain: strict`: он не может влиять на раскладку документа физически.
+ */
+
+@layer motion {
+  /* ───────────────────────────────────────────────────────────────────
+   * Фон-прибор
+   *
+   * Три слоя поверх циферблата: лимб со сквозной шкалой, разметочная сетка
+   * и две промывки давления. Ни картинок, ни запросов — градиенты и маски.
+   * Насыщенность держится в единицах процентов (SPEC §11.4.1): это фактура
+   * бумаги, а не заливка цветом.
+   * ─────────────────────────────────────────────────────────────────── */
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    /*
+     * strict = layout + paint + size + style. Фон физически не может
+     * ни сдвинуть документ, ни заставить его пересчитать раскладку.
+     */
+    contain: strict;
+  }
+
+  .backdrop__layer {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Лимб: кольцо с рисками, уходящее за правый верхний угол. */
+  .backdrop__dial {
+    inset: auto auto auto 50%;
+    inline-size: min(160vmax, 1600px);
+    aspect-ratio: 1;
+    translate: -10% -46%;
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        var(--c-hairline) 0deg 0.3deg,
+        transparent 0.3deg 3deg
+      );
+    -webkit-mask-image: radial-gradient(
+      circle,
+      transparent 0 40.2%,
+      #000 40.4% 41.4%,
+      transparent 41.6% 100%
+    );
+    mask-image: radial-gradient(
+      circle,
+      transparent 0 40.2%,
+      #000 40.4% 41.4%,
+      transparent 41.6% 100%
+    );
+    opacity: 0.9;
+  }
+
+  /* Второе кольцо, меньше и реже: два лимба идут навстречу друг другу. */
+  .backdrop__dial--inner {
+    inline-size: min(96vmax, 1000px);
+    translate: -34% -30%;
+    background: repeating-conic-gradient(
+      from 0deg,
+      var(--c-wash) 0deg 0.5deg,
+      transparent 0.5deg 9deg
+    );
+  }
+
+  /* Разметочная сетка: миллиметровка прибора, растворяется к краям. */
+  .backdrop__grid {
+    background:
+      repeating-linear-gradient(90deg, var(--c-hairline) 0 1px, transparent 1px 88px),
+      repeating-linear-gradient(0deg, var(--c-hairline) 0 1px, transparent 1px 88px);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000, transparent 78%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000, transparent 78%);
+    opacity: 0.7;
+  }
+
+  /*
+   * Обход стрелки. Мягкий клин, который идёт по кругу вслед за лимбом —
+   * то же движение, что у стрелки прибора под давлением. Держится в тех же
+   * единицах процентов, что и промывки: на светлом фоне это оттенок, а не
+   * пятно, и текст поверх него читается ровно так же.
+   */
+  .backdrop__sweep {
+    inset: auto auto auto 50%;
+    inline-size: min(160vmax, 1600px);
+    aspect-ratio: 1;
+    translate: -10% -46%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg 296deg,
+      var(--c-wash-soft) 340deg,
+      transparent 360deg
+    );
+    -webkit-mask-image: radial-gradient(circle, #000 0 41%, transparent 42%);
+    mask-image: radial-gradient(circle, #000 0 41%, transparent 42%);
+  }
+
+  /* Давление: две мягкие промывки акцентом, расходящиеся по диагонали. */
+  .backdrop__wash {
+    inset: -20%;
+    background:
+      radial-gradient(38rem 38rem at 18% 22%, var(--c-wash) 0%, transparent 62%),
+      radial-gradient(34rem 34rem at 84% 68%, var(--c-wash-soft) 0%, transparent 60%);
+  }
+
+  /* ── Движение фона ───────────────────────────────────────────────────
+   * Только rotate и translate на композиторе, циклы по минуте с лишним:
+   * на глаз это не «анимация», а то, что картинка не стоит на месте.
+   * ─────────────────────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: no-preference) {
+    .backdrop__dial {
+      animation: dial-turn 240s linear infinite;
+    }
+
+    .backdrop__dial--inner {
+      animation: dial-turn 150s linear infinite reverse;
+    }
+
+    .backdrop__sweep {
+      animation: dial-turn 110s linear infinite;
+    }
+
+    .backdrop__wash {
+      animation: wash-drift 68s ease-in-out infinite alternate;
+    }
+
+    .backdrop__grid {
+      animation: grid-drift 90s linear infinite;
+    }
+  }
+
+  @keyframes dial-turn {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  @keyframes wash-drift {
+    from {
+      transform: translate3d(-3%, -2%, 0) scale(1);
+    }
+
+    to {
+      transform: translate3d(4%, 3%, 0) scale(1.12);
+    }
+  }
+
+  @keyframes grid-drift {
+    to {
+      transform: translate3d(88px, 88px, 0);
+    }
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+   * Шкала прочитанного
+   *
+   * Стрелка манометра по верхней кромке: сколько страницы пройдено.
+   * Привязана к позиции прокрутки, а не ко времени, поэтому не мигает
+   * и не требует ни одного кадра, пока страница стоит.
+   * ─────────────────────────────────────────────────────────────────── */
+  .progress {
+    display: none;
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+   * Появление блоков
+   * ─────────────────────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .progress {
+        display: block;
+        position: fixed;
+        inset-block-start: 0;
+        inset-inline: 0;
+        z-index: 30;
+        block-size: 3px;
+        background: var(--c-accent);
+        transform-origin: 0 50%;
+        scale: 0 1;
+        animation: progress-fill linear both;
+        animation-timeline: scroll(root block);
+      }
+
+      /*
+       * Базовый приём всего сайта: блок приходит снизу и проявляется,
+       * пока входит в кадр. Диапазон закрывается на 42% входа — блок
+       * дособирается заметно раньше, чем встанет в середину экрана,
+       * иначе чтение превращается в ожидание.
+       */
+      .reveal {
+        animation: reveal-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 42%;
+      }
+
+      /* Карточки в ряду разбираются по очереди, а не хлопком. */
+      .reveal-set > * {
+        animation: reveal-card linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 46%;
+      }
+
+      .reveal-set > :nth-child(2) {
+        animation-range: entry 4% entry 52%;
+      }
+
+      .reveal-set > :nth-child(3) {
+        animation-range: entry 8% entry 58%;
+      }
+
+      .reveal-set > :nth-child(4) {
+        animation-range: entry 12% entry 64%;
+      }
+
+      .reveal-set > :nth-child(n + 5) {
+        animation-range: entry 16% entry 70%;
+      }
+
+      /* Риски лимба разъезжаются от левого края — граница раздела чертится. */
+      .scale {
+        animation: scale-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 90%;
+      }
+
+      /*
+       * Трасса ступеней дорисовывается вниз по мере прокрутки. Диапазон
+       * взят по всему списку: линия идёт вровень с чтением, а не опережает.
+       */
+      .steps > li:not(:last-child)::before {
+        transform-origin: 50% 0;
+        animation: trace-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 30% cover 55%;
+      }
+
+      /* Номер ступени встаёт на трассу, когда до него дошла линия. */
+      .steps .step__no {
+        animation: step-pop linear both;
+        animation-timeline: view();
+        animation-range: entry 10% entry 60%;
+      }
+
+      /*
+       * Текст статьи. Абзацы проявляются заметно раньше, чем доходят до
+       * места чтения: диапазон закрыт на 38% входа, то есть блок уже собран,
+       * когда глаз до него добирается. Иначе скроллителлинг превращается
+       * в тормоз, а статью на сайте читают ради ответа, а не ради эффекта.
+       */
+      .post__body > * {
+        animation: reveal-soft linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 38%;
+      }
+
+      /* Латунная риска раздела чертится слева направо. */
+      .post__body h2::before {
+        animation: line-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 5% entry 65%;
+      }
+
+      /* Первый экран собирается по загрузке, а не по прокрутке: он уже в кадре. */
+      .hero__intro > * {
+        animation: reveal-rise 620ms var(--ease-out) both;
+      }
+
+      /*
+       * Отдельного правила для заголовка первого экрана больше не нужно:
+       * прозрачности нет ни у одного текстового кадра, а значит и LCP она
+       * не задерживает. Chrome не засчитывает отрисовку элемента с
+       * opacity: 0 — на этом появление h1 стоило бы больше полсекунды метрики.
+       */
+      .hero__intro > :first-child {
+        animation-name: reveal-soft;
+      }
+
+      .hero__intro > :nth-child(2) {
+        animation-delay: 70ms;
+      }
+
+      .hero__intro > :nth-child(3) {
+        animation-delay: 140ms;
+      }
+
+      .hero__intro > :nth-child(4) {
+        animation-delay: 210ms;
+      }
+
+      .hero__intro > :nth-child(n + 5) {
+        animation-delay: 280ms;
+      }
+    }
+  }
+
+  @keyframes progress-fill {
+    from {
+      scale: 0 1;
+    }
+
+    to {
+      scale: 1 1;
+    }
+  }
+
+  @keyframes line-draw {
+    from {
+      transform: scaleX(0);
+    }
+
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Мелкий сдвиг для абзацев статьи: движение есть, чтения не задерживает. */
+  @keyframes reveal-soft {
+    from {
+      transform: translate3d(0, 0.75rem, 0);
+    }
+
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Блок приходит снизу. Без прозрачности — см. правило 2 в шапке файла. */
+  @keyframes reveal-rise {
+    from {
+      transform: translate3d(0, 1.75rem, 0);
+    }
+
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Карточка вдобавок подбирается: масштаб контрасту не мешает. */
+  @keyframes reveal-card {
+    from {
+      transform: translate3d(0, 1.5rem, 0) scale(0.985);
+    }
+
+    to {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes scale-draw {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+
+    to {
+      transform: scaleX(1);
+      opacity: 0.75;
+    }
+  }
+
+  @keyframes trace-draw {
+    from {
+      transform: scaleY(0);
+    }
+
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  /*
+   * Номер ступени — это текст «01», поэтому только масштаб. Кружок вырастает
+   * на трассе, цифра при этом читается на всём протяжении.
+   */
+  @keyframes step-pop {
+    from {
+      transform: scale(0.72);
+    }
+
+    to {
+      transform: scale(1);
+    }
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+   * Прибор первого экрана
+   *
+   * Стрелка отрабатывает включение: перелёт с перебегом и возврат — так
+   * ведёт себя настоящий манометр, когда на него подают давление.
+   * Лимб под ней доворачивается от прокрутки.
+   * ─────────────────────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: no-preference) {
+    .dial__needle {
+      animation: needle-set 1500ms cubic-bezier(0.16, 0.84, 0.28, 1) both 180ms;
+    }
+
+    /* Длина штриха приходит атрибутом из Dial.astro — здесь только отсчёт в ноль. */
+    .dial__arc {
+      animation: arc-draw 1400ms var(--ease-out) both 220ms;
+    }
+
+    @supports (animation-timeline: view()) {
+      .dial__limb {
+        animation: limb-turn linear both;
+        animation-timeline: scroll(root block);
+      }
+    }
+  }
+
+  @keyframes needle-set {
+    from {
+      rotate: -128deg;
+    }
+
+    62% {
+      rotate: 11deg;
+    }
+
+    to {
+      rotate: 0deg;
+    }
+  }
+
+  @keyframes arc-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes limb-turn {
+    to {
+      rotate: 42deg;
+    }
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+   * Наведение и нажатие
+   * ─────────────────────────────────────────────────────────────────── */
+  .lift {
+    transition:
+      box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      translate var(--dur-base) var(--ease-out);
+  }
+
+  .lift:hover {
+    box-shadow: var(--shadow-2);
+    translate: 0 -2px;
+  }
+}
