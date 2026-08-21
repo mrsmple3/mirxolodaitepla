@@ -1,0 +1,55 @@
+---
+interface Props {
+  /** Последний элемент — текущая страница, ссылкой не становится. */
+  trail: { name: string; path: string }[];
+}
+
+const { trail } = Astro.props;
+---
+
+<nav class="crumbs" aria-label="Хлебные крошки">
+  <ol>
+    {
+      trail.map((item, i) => (
+        <li>
+          {i < trail.length - 1 ? (
+            <a href={item.path}>{item.name}</a>
+          ) : (
+            <span aria-current="page">{item.name}</span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3xs) var(--sp-2xs);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  .crumbs li + li::before {
+    content: '/';
+    margin-inline-end: var(--sp-2xs);
+    color: var(--c-brass);
+  }
+
+  .crumbs li + li {
+    margin-block-start: 0;
+  }
+
+  /* Цель нажатия не меньше 24 px (WCAG 2.5.8). */
+  .crumbs a,
+  .crumbs span {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.75rem;
+  }
+</style>

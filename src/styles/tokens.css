@@ -1,0 +1,342 @@
+/*
+ * Дизайн-система «Манометрический коллектор» (SPEC §11).
+ *
+ * Метафора: коллектор, который мастер вешает на блок первым делом.
+ * Белый циферблат, риски шкалы, синий порт низкого давления (холод),
+ * красный высокого (тепло), латунные фитинги.
+ *
+ * Правила, без которых направление превращается в шаблон:
+ *   1. Цвет — не больше нескольких процентов площади: кромки, риски, одна кнопка.
+ *   2. Один акцент на экран. Синий и красный не встречаются вместе — их разводит сезон.
+ *   3. Латунь никогда не набирает текст (3.26:1 на циферблате). Только линии.
+ *   4. Моноширинная гарнитура не набирает заголовки. Только цифры, часы, телефон, подписи.
+ *   5. Ни одной залитой цветом панели.
+ */
+
+@layer tokens, base, layout, components;
+
+/* ── Шрифты. Локальные, подмножество кириллица + латиница ─────────────── */
+
+@font-face {
+  font-family: 'Golos Text';
+  src: url('/fonts/golos-text-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Golos Text';
+  src: url('/fonts/golos-text-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('/fonts/martian-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer tokens {
+  :root {
+    /* --- Цвет. Все значения проверены на контраст к фону-циферблату --- */
+    --c-dial: #f4f6f7;          /* фон-циферблат            */
+    --c-surface: #ffffff;       /* карточки поверх фона     */
+    --c-graphite: #191e23;      /* корпус прибора, 15.5:1   */
+    --c-muted: #3d464f;         /* вторичный текст,  8.9:1  */
+    --c-low: #0b5aa6;           /* порт низкого давления, холод, 6.4:1 */
+    --c-low-hover: #084a86;     /*                        8.3:1 */
+    --c-high: #b3261e;          /* порт высокого давления, тепло, 6.0:1 */
+    --c-high-hover: #8f1e17;    /*                        8.2:1 */
+    --c-brass: #a8832c;         /* фитинги: только линии, 3.3:1 — не текст */
+    --c-rule: #c9d2d8;          /* хайрлайны                */
+
+    /* Сезон переставляет полюс. Значение приходит из business.ts на сборке. */
+    --c-accent: var(--c-low);
+    --c-accent-hover: var(--c-low-hover);
+    --c-accent-ink: var(--c-dial);
+
+    /* --- Типографика --- */
+    --font-text: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-inst: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --fs-100: 0.8125rem;
+    --fs-200: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
+    --fs-300: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+    --fs-400: clamp(1.25rem, 1.13rem + 0.6vw, 1.5rem);
+    --fs-500: clamp(1.5rem, 1.28rem + 1.1vw, 2rem);
+    --fs-600: clamp(1.625rem, 1.32rem + 1.55vw, 2.75rem);
+
+    /* Приборный слой: мелко, с трекингом, капслоком */
+    --fs-inst: 0.6875rem;
+    --tracking-inst: 0.09em;
+
+    --lh-tight: 1.14;
+    --lh-normal: 1.6;
+    --measure: 66ch;
+
+    /* --- Пространство. Ритм кратен 8: риски шкалы совпадают с базовой линией --- */
+    --sp-3xs: 0.25rem;
+    --sp-2xs: 0.5rem;
+    --sp-xs: 0.75rem;
+    --sp-s: 1rem;
+    --sp-m: 1.5rem;
+    --sp-l: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+    --sp-xl: clamp(3rem, 2rem + 4vw, 4.5rem);
+
+    --radius: 0.375rem;
+    --content-max: 68rem;
+    --tap-min: 2.75rem;
+
+    /* --- Сигнатура: риски приборного лимба --- */
+    --scale-h: 14px;
+    --scale-minor: 8px;
+    --scale-major: 40px;
+  }
+
+  /* Зима: ведёт красный порт. Одна правка в business.ts, ноль JS. */
+  [data-season='winter'] {
+    --c-accent: var(--c-high);
+    --c-accent-hover: var(--c-high-hover);
+  }
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--c-dial);
+    color: var(--c-graphite);
+    font-family: var(--font-text);
+    font-size: var(--fs-200);
+    line-height: var(--lh-normal);
+    text-wrap: pretty;
+    /*
+     * Место под фиксированную полосу вызова. Высота полосы — кромка 3px + отступы
+     * + кнопка 44px, плюс безопасная зона: её надо учесть и здесь, иначе на
+     * телефонах с вырезом подвал уезжает под полосу.
+     */
+    padding-block-end: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (width >= 60rem) {
+    body {
+      padding-block-end: 0;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-text);
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin-block: 0 var(--sp-s);
+  }
+
+  h1 {
+    font-size: var(--fs-600);
+  }
+
+  h2 {
+    font-size: var(--fs-500);
+  }
+
+  h3 {
+    font-size: var(--fs-400);
+  }
+
+  p,
+  ul,
+  ol {
+    margin-block: 0 var(--sp-s);
+    max-inline-size: var(--measure);
+  }
+
+  ul,
+  ol {
+    padding-inline-start: 1.15rem;
+  }
+
+  li + li {
+    margin-block-start: var(--sp-2xs);
+  }
+
+  a {
+    color: var(--c-accent);
+    text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    color: var(--c-accent-hover);
+  }
+
+  address {
+    font-style: normal;
+  }
+
+  img,
+  picture,
+  svg {
+    max-inline-size: 100%;
+    block-size: auto;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--c-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer layout {
+  .wrap {
+    inline-size: min(100% - 2 * var(--sp-s), var(--content-max));
+    margin-inline: auto;
+  }
+
+  .section {
+    padding-block: var(--sp-l);
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-s);
+  }
+
+  .grid-cards {
+    display: grid;
+    gap: var(--sp-s);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  }
+}
+
+@layer components {
+  /*
+   * Сигнатурный элемент: риски приборного лимба.
+   * Два градиента, ноль элементов в DOM, ноль картинок, ноль запросов.
+   * Служит границей секций — других разделителей на сайте нет.
+   */
+  .scale {
+    block-size: var(--scale-h);
+    background:
+      repeating-linear-gradient(90deg, var(--c-brass) 0 1px, transparent 1px var(--scale-major))
+        0 0 / 100% var(--scale-h) no-repeat,
+      repeating-linear-gradient(90deg, var(--c-graphite) 0 1px, transparent 1px var(--scale-minor))
+        0 100% / 100% calc(var(--scale-h) / 2) no-repeat;
+    opacity: 0.75;
+  }
+
+  /* Подпись приборного слоя: показание, а не заголовок. */
+  .inst {
+    font-family: var(--font-inst);
+    font-size: var(--fs-inst);
+    font-weight: 500;
+    letter-spacing: var(--tracking-inst);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-accent);
+  }
+
+  .inst--muted {
+    color: var(--c-muted);
+  }
+
+  .skip-link {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    z-index: 10;
+    padding: var(--sp-2xs) var(--sp-s);
+    background: var(--c-graphite);
+    color: var(--c-dial);
+    text-decoration: none;
+    transform: translateY(-120%);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2xs);
+    min-block-size: 3rem;
+    padding: var(--sp-xs) var(--sp-m);
+    border: 2px solid var(--c-accent);
+    border-radius: var(--radius);
+    background: var(--c-accent);
+    color: var(--c-accent-ink);
+    font-size: var(--fs-300);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: var(--c-accent-hover);
+    border-color: var(--c-accent-hover);
+    color: var(--c-accent-ink);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--c-accent);
+  }
+
+  .btn--ghost:hover {
+    background: transparent;
+    color: var(--c-accent-hover);
+  }
+
+  /* Оффер: латунная риска слева, без заливки цветом. */
+  .offer {
+    border-inline-start: 3px solid var(--c-brass);
+    background: var(--c-surface);
+    padding: var(--sp-s) var(--sp-m);
+  }
+
+  .card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius);
+    padding: var(--sp-s) var(--sp-m) var(--sp-m);
+  }
+}
+
+/*
+ * Вне слоёв намеренно: беслойные стили сильнее любого @layer,
+ * поэтому reduced-motion перебивает всё без !important.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}

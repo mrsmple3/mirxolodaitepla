@@ -1,0 +1,138 @@
+---
+import Base from './Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CallToAction from '../components/CallToAction.astro';
+import Faq from '../components/Faq.astro';
+import RelatedServices from '../components/RelatedServices.astro';
+import { required, type Service } from '../data/business.ts';
+import { breadcrumbs, faqPage, graph, hvacBusiness, service as serviceNode } from '../lib/schema.ts';
+
+interface Props {
+  service: Service;
+  /** Описание для Service в JSON-LD. Короткое, одной фразой. */
+  schemaDescription: string;
+  /** Показываются на странице и уходят в FAQPage. Разметка без видимого текста запрещена. */
+  faq?: { question: string; answer: string }[];
+}
+
+const { service, schemaDescription, faq = [] } = Astro.props;
+
+const path = `/${service.slug}/`;
+const trail = [
+  { name: 'Главная', path: '/' },
+  { name: service.name, path },
+];
+
+const nodes = [
+  hvacBusiness(),
+  serviceNode({ name: service.name, path, description: schemaDescription }),
+  breadcrumbs(trail),
+];
+
+// FAQPage — только когда вопросы реально на странице (SPEC §6).
+if (faq.length > 0) nodes.push(faqPage(faq));
+
+const jsonLd = graph(nodes);
+---
+
+<Base
+  title={service.metaTitle}
+  description={required(service.metaDescription, `services.${service.slug}.metaDescription`)}
+  path={path}
+  jsonLd={jsonLd}
+>
+  <div class="wrap service-page">
+    <Breadcrumbs trail={trail} />
+
+    <h1>{service.h1}</h1>
+
+    <slot name="intro" />
+
+    <section class="block">
+      <h2>Что входит в работу</h2>
+      <slot name="included" />
+    </section>
+
+    <section class="block">
+      <h2>Что не входит и считается отдельно</h2>
+      <slot name="extra" />
+    </section>
+
+    <section class="block">
+      <h2>От чего зависит цена</h2>
+      <slot name="price" />
+      <div class="offer service-page__offer">
+        <p class="inst service-page__offer-label">Цена за 10 минут</p>
+        <p class="service-page__offer-text">
+          Пришлите фото в Telegram — отвечу ценой за десять минут, без выезда на замер.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Сколько занимает по времени</h2>
+      <slot name="time" />
+    </section>
+
+    <section class="block">
+      <h2>Чем заканчивается дешёвая работа</h2>
+      <slot name="mistakes" />
+    </section>
+
+    {
+      faq.length > 0 && (
+        <section class="block">
+          <h2>Частые вопросы</h2>
+          <Faq items={faq} />
+        </section>
+      )
+    }
+
+    <section class="block">
+      <h2>Позвонить или написать</h2>
+      <CallToAction label="Ответ за 10 минут" />
+    </section>
+
+    <RelatedServices current={service.slug} />
+  </div>
+</Base>
+
+<style>
+  .service-page {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+  }
+
+  .service-page h1 {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .block h2 {
+    font-size: var(--fs-400);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+
+  .service-page__offer {
+    margin-block-start: var(--sp-2xs);
+    max-inline-size: var(--measure);
+  }
+
+  .service-page__offer-label {
+    margin-block: 0 var(--sp-3xs);
+  }
+
+  .service-page__offer-text {
+    margin: 0;
+  }
+</style>

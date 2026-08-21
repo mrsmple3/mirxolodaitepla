@@ -1,0 +1,58 @@
+---
+import type { Service } from '../data/business.ts';
+
+interface Props {
+  service: Service;
+  /** Короткое описание карточки. Живёт на странице, а не в данных. */
+  summary: string;
+}
+
+const { service, summary } = Astro.props;
+
+/*
+ * Ссылка появляется только когда страница услуги действительно собрана
+ * (status: 'live' в business.ts). До этого карточка остаётся текстом —
+ * ссылок в никуда на сайте не бывает, это ловит npm run links.
+ */
+const href = service.status === 'live' ? `/${service.slug}/` : null;
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag class:list={['card', 'service', { 'service--linked': href }]} href={href}>
+  <h3 class="service__name">{service.name}</h3>
+  <p class="service__summary">{summary}</p>
+</Tag>
+
+<style>
+  .service {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border-block-start: 3px solid var(--c-brass);
+  }
+
+  .service__name {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-3xs);
+  }
+
+  .service--linked .service__name {
+    color: var(--c-accent);
+  }
+
+  .service--linked:hover {
+    border-color: var(--c-accent);
+  }
+
+  .service--linked:hover .service__name {
+    color: var(--c-accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .service__summary {
+    margin: 0;
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+</style>

@@ -1,0 +1,7 @@
+<!-- Заглушка. Настоящий знак — шаг 2 (дизайн). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Мир холода и тепла">
+  <rect width="32" height="32" rx="6" fill="#0a5ca8"/>
+  <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
+    <path d="M16 6v20M7.3 11l17.4 10M7.3 21l17.4-10"/>
+  </g>
+</svg>

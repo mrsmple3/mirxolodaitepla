@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/html-validate/build/schema/config.json",
+  "root": true,
+  "extends": ["html-validate:recommended", "html-validate:document"],
+  "rules": {
+    "no-trailing-whitespace": "off",
+    "attribute-boolean-style": ["error", { "style": "omit" }],
+    "void-style": ["error", { "style": "omit" }],
+    "require-sri": "off"
+  }
+}

@@ -1,0 +1,201 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CallToAction from '../components/CallToAction.astro';
+import { business } from '../data/business.ts';
+import { breadcrumbs, graph, hvacBusiness } from '../lib/schema.ts';
+
+const path = '/o-mastere/';
+const trail = [
+  { name: 'Главная', path: '/' },
+  { name: 'О мастере', path },
+];
+
+const title = 'Кто приедет — мастер Ровшан, Ташкент';
+const description =
+  'Кондиционерами и котлами в Ташкенте занимается мастер Ровшан. Работаю сам, без бригады: как идёт работа от звонка до пуска и за что я не берусь.';
+
+const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
+---
+
+<Base title={title} description={description} path={path} jsonLd={jsonLd}>
+  <div class="wrap page">
+    <Breadcrumbs trail={trail} />
+
+    <h1>Кто приедет и как я работаю</h1>
+
+    <p class="lead">
+      Меня зовут {business.master.firstName}. Занимаюсь кондиционерами и котлами в
+      {' '}{business.address.addressLocality}е, с газовым оборудованием работаю — допуск
+      есть. Работаю сам: заявку принимаю я, приезжаю тоже я. Диспетчера, который обещает
+      одно, и бригады, которая делает другое, между нами нет.
+    </p>
+
+    <section class="block">
+      <h2>Почему тут нет отзывов и фотографий</h2>
+      <p>
+        Потому что настоящих пока нет, а чужие ставить я не буду. Отзывы с чужих сайтов,
+        стоковые фотографии красивых котельных и «более 500 довольных клиентов» — то, что
+        отличает страницу мастера от страницы, написанной за один вечер. Появятся свои
+        снимки объектов — появятся здесь.
+      </p>
+      <p>
+        Пока предлагаю судить по другому: по тому, насколько предметно я говорю по
+        телефону. Задайте любой вопрос из тех, что на страницах услуг, — про вакуумирование,
+        про уклон дренажа, про расширительный бак. Разговор занимает пять минут и говорит
+        о мастере больше, чем страница с отзывами.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>Как идёт работа от звонка до пуска</h2>
+      <ol class="steps">
+        <li>
+          <span class="inst step__no">01</span>
+          <div>
+            <h3>Разговор или фото</h3>
+            <p>
+              По телефону разбираемся, что случилось. Если это монтаж — прошу два-три
+              снимка в {business.telegram.label} и называю цену за десять минут. Если
+              поломка — часто выясняется, что можно проверить самому, и выезд не нужен.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="inst step__no">02</span>
+          <div>
+            <h3>Договорённость по времени</h3>
+            <p>
+              Называю окно, в которое приеду, и предупреждаю, если сдвигаюсь. Работаю
+              круглосуточно: ночной вызов в жару или в мороз — обычное дело.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="inst step__no">03</span>
+          <div>
+            <h3>Работа с объяснением</h3>
+            <p>
+              Показываю, где пройдёт трасса и что буду сверлить, до того как включу
+              перфоратор. Если по ходу вылезает что-то, чего не было видно на фото, я
+              останавливаюсь и говорю новую цену, а не ставлю перед фактом в конце.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="inst step__no">04</span>
+          <div>
+            <h3>Проверка и уборка</h3>
+            <p>
+              Опрессовка, вакуум, пуск, замер температуры на выходе. Мусор и упаковку
+              увожу с собой — это часть работы, а не отдельная услуга.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="inst step__no">05</span>
+          <div>
+            <h3>Если через месяц что-то не так</h3>
+            <p>
+              Звоните мне, а не в магазин. Приеду и разберусь, что происходит: моя работа
+              — моя ответственность. Формальных бумаг я не выдаю и обещать их не буду,
+              но телефон не меняю.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block">
+      <h2>За что я не берусь</h2>
+      <ul>
+        <li>
+          <strong>Работу вслепую.</strong> Если по фотографии не видно, что происходит, я
+          не называю цену наугад, чтобы получить заказ, а прошу нормальные снимки или
+          говорю, что нужен выезд на осмотр и сколько он стоит.
+        </li>
+        <li>
+          <strong>Промышленные системы.</strong> Чиллеры, прецизионные кондиционеры для
+          серверных, вентиляция офисных зданий — не мой профиль, и браться за них ради
+          заказа я не стану.
+        </li>
+        <li>
+          <strong>Ремонт «на живую нитку».</strong> Если единственный способ дотянуть до
+          конца сезона — подлить фреона в дырявую систему, я скажу об этом прямо и назову
+          цену нормального ремонта. Решение за вами, но молчать о причине не буду.
+        </li>
+        <li>
+          <strong>Работа, которая не окупается.</strong> Когда ремонт стоит дороже
+          половины нового блока, честный ответ — не чинить.
+        </li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>Проверить меня на пяти минутах разговора</h2>
+      <CallToAction label="Ответ за 10 минут" />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+  }
+
+  .page h1 {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .lead {
+    font-size: var(--fs-300);
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .block h2 {
+    font-size: var(--fs-400);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+    max-inline-size: var(--measure);
+  }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--sp-2xs);
+    align-items: start;
+    margin-block-start: 0;
+  }
+
+  .steps h3 {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-3xs);
+  }
+
+  .steps p {
+    margin: 0;
+  }
+
+  .step__no {
+    padding-block-start: 0.35rem;
+  }
+</style>

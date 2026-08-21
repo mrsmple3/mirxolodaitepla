@@ -1,0 +1,182 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CallToAction from '../components/CallToAction.astro';
+import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
+import { breadcrumbs, graph, hvacBusiness } from '../lib/schema.ts';
+
+const path = '/kontakty/';
+const trail = [
+  { name: 'Главная', path: '/' },
+  { name: 'Контакты', path },
+];
+
+const title = 'Контакты — телефон и Telegram мастера в Ташкенте';
+const description =
+  'Телефон и Telegram мастера по кондиционерам и котлам в Ташкенте. Круглосуточно, без выходных. Офиса нет — приезжаю к вам сам, по всему городу.';
+
+const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
+---
+
+<Base title={title} description={description} path={path} jsonLd={jsonLd}>
+  <div class="wrap page">
+    <Breadcrumbs trail={trail} />
+
+    <h1>Как связаться</h1>
+
+    <p class="lead">
+      Быстрее всего — позвонить. Если нужен монтаж и вы хотите знать цену заранее,
+      отправьте фото в {business.telegram.label}: так ответ будет точнее, чем на словах.
+    </p>
+
+    <div class="contacts">
+      <div class="contact">
+        <span class="inst inst--muted">Телефон</span>
+        <a class="contact__value" href={telHref}>{phoneDisplay}</a>
+        <span class="contact__note">Звонок — самый быстрый способ</span>
+      </div>
+
+      <div class="contact">
+        <span class="inst inst--muted">{business.telegram.label}</span>
+        <a class="contact__value" href={business.telegram.url} rel="noopener">{phoneDisplay}</a>
+        <span class="contact__note">Тот же номер. Сюда — фото для расчёта цены</span>
+      </div>
+    </div>
+
+    <section class="block">
+      <h2>График</h2>
+      <p>
+        <strong>{openingHoursText}.</strong> Это не оборот речи: кондиционер встал в жару
+        или котёл потух ночью — звоните сразу, а не ждите утра. Ночные вызовы такие же
+        рабочие, как дневные.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>Куда выезжаю</h2>
+      <p>
+        {business.areaServedText}. Работаю по всему городу, отдельных «своих» районов у
+        меня нет. За пределы {business.address.addressLocality}а не езжу: обещать
+        пригород и не доехать — хуже, чем сразу сказать «нет».
+      </p>
+      <p class="note">
+        Офиса и мастерской нет, приезжать ко мне некуда. Всё делается у вас на объекте,
+        поэтому и адреса на сайте нет — его просто не существует.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>Позвонить или написать — что быстрее</h2>
+      <p>
+        <strong>Звоните, если что-то сломалось.</strong> Поломку быстрее разобрать
+        голосом: я задам три-четыре вопроса и часто уже по ответам понимаю, чистка это,
+        утечка фреона или электрика. Заодно скажу, что можно проверить самому прямо
+        сейчас: звонок «не морозит» нередко заканчивается тем, что выезд не нужен вовсе.
+      </p>
+      <p>
+        <strong>Пишите, если нужен монтаж.</strong> Тут наоборот: слова бесполезны, а две
+        фотографии решают всё. По снимку видно и стену, и путь трассы, и то, дотянется ли
+        обычная лестница до места под наружный блок. На словах это выясняется тремя
+        уточняющими вопросами, по фото — сразу.
+      </p>
+
+      <section class="block">
+      <h2>Что происходит после звонка</h2>
+      <ol>
+        <li>Разбираемся, что случилось, и нужен ли выезд вообще.</li>
+        <li>Если нужен — называю окно, в которое приеду, и цену или вилку по ней.</li>
+        <li>Если по дороге задерживаюсь, звоню и говорю об этом, а не пропадаю.</li>
+        <li>На месте показываю, что буду делать, до того как начну сверлить.</li>
+        <li>Если вылезло что-то, чего не было видно на фото, называю новую цену сразу, а не в конце работы.</li>
+      </ol>
+      </section>
+
+      <h2>Что прислать, чтобы узнать цену</h2>
+      <ul>
+        <li><strong>Монтаж:</strong> фото стены под внутренний блок и фото места под наружный.</li>
+        <li><strong>Поломка:</strong> марка, модель и код ошибки с дисплея, если он есть.</li>
+        <li><strong>Котёл:</strong> фото котла целиком, шильдика с моделью и манометра.</li>
+        <li><strong>Чистка:</strong> достаточно сказать тип блока и сколько их.</li>
+      </ul>
+      <CallToAction label="Ответ за 10 минут" />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+  }
+
+  .page h1 {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .lead {
+    font-size: var(--fs-300);
+  }
+
+  .contacts {
+    display: grid;
+    gap: var(--sp-s);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    max-inline-size: var(--measure);
+  }
+
+  .contact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3xs);
+    padding: var(--sp-s) var(--sp-m);
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-block-start: 3px solid var(--c-brass);
+    border-radius: var(--radius);
+    color: var(--c-graphite);
+  }
+
+  .contact:has(.contact__value:hover) {
+    border-color: var(--c-accent);
+    border-block-start-color: var(--c-accent);
+  }
+
+  .contact__value {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-min);
+    font-size: var(--fs-400);
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .contact__value:hover {
+    text-decoration: underline;
+  }
+
+  .contact__note {
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .block h2 {
+    font-size: var(--fs-400);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+
+  .note {
+    color: var(--c-muted);
+  }
+</style>

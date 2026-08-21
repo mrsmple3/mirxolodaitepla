@@ -1,0 +1,77 @@
+---
+interface Props {
+  /** Те же пары уходят в FAQPage. Разметка без видимого текста запрещена (SPEC §6). */
+  items: { question: string; answer: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="faq">
+  {
+    items.map((qa) => (
+      <details class="faq__item">
+        <summary class="faq__q">{qa.question}</summary>
+        <p class="faq__a">{qa.answer}</p>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+    max-inline-size: var(--measure);
+  }
+
+  .faq__item {
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius);
+  }
+
+  /*
+   * display: flex снимает нативный маркер, поэтому ::marker бесполезен —
+   * шеврон рисуется руками, иначе неясно, что карточка раскрывается.
+   */
+  .faq__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-s);
+    padding: var(--sp-xs) var(--sp-s);
+    min-block-size: var(--tap-min);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__q::after {
+    content: '';
+    flex: none;
+    inline-size: 0.6em;
+    block-size: 0.6em;
+    border-inline-end: 2px solid var(--c-brass);
+    border-block-end: 2px solid var(--c-brass);
+    rotate: 45deg;
+    translate: 0 -0.15em;
+    transition: rotate 120ms ease;
+  }
+
+  .faq__item[open] .faq__q::after {
+    rotate: -135deg;
+    translate: 0 0.15em;
+  }
+
+  .faq__a {
+    margin: 0;
+    padding: 0 var(--sp-s) var(--sp-s);
+    color: var(--c-muted);
+  }
+</style>

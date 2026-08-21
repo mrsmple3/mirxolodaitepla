@@ -1,0 +1,37 @@
+{
+  "name": "mir-holoda-i-tepla",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:check": "SITE_URL=http://localhost:4321 astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "html": "html-validate \"dist/**/*.html\"",
+    "links": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/check-links.mjs",
+    "schema": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/check-schema.mjs",
+    "words": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/word-count.mjs",
+    "viewport": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/check-viewport.mjs",
+    "lh": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/lighthouse.mjs",
+    "seo": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/seo-table.mjs",
+    "selftest": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/selftest-checks.mjs",
+    "verify": "npm run build:check && npm run html && npm run links && npm run schema && npm run words && npm run viewport && npm run lh && npm run build"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^7.2.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "html-validate": "^10.11.3",
+    "lighthouse": "^13.4.1",
+    "linkinator": "^8.0.4",
+    "node-html-parser": "^9.0.1",
+    "typescript": "^5.9.3"
+  }
+}

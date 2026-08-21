@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+import CallToAction from '../components/CallToAction.astro';
+import { business } from '../data/business.ts';
+import { graph, hvacBusiness } from '../lib/schema.ts';
+
+const title = 'Страница не найдена — Мир холода и тепла';
+const description =
+  'Такой страницы на сайте нет: возможно, ссылка устарела. Здесь список услуг, телефон мастера и Telegram — Ташкент, круглосуточно, без выходных.';
+
+const live = business.services.filter((s) => s.status === 'live');
+const jsonLd = graph([hvacBusiness()]);
+---
+
+<Base title={title} description={description} path="/404/" jsonLd={jsonLd} noindex={true}>
+  <div class="wrap page">
+    <p class="inst">Ошибка 404</p>
+    <h1>Такой страницы нет</h1>
+
+    <p class="lead">
+      Скорее всего, ссылка устарела или в адресе опечатка. Сайт маленький, потеряться в
+      нём трудно — вот всё, что на нём есть.
+    </p>
+
+    <nav aria-label="Услуги">
+      <ul class="links">
+        {live.map((s) => (
+          <li><a href={`/${s.slug}/`}>{s.name}</a></li>
+        ))}
+        <li><a href="/o-mastere/">О мастере</a></li>
+        <li><a href="/blog/">Блог</a></li>
+        <li><a href="/kontakty/">Контакты</a></li>
+        <li><a href="/">Главная</a></li>
+      </ul>
+    </nav>
+
+    <CallToAction label="Или просто позвоните" />
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: var(--sp-l) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-s);
+  }
+
+  .lead {
+    font-size: var(--fs-300);
+  }
+
+  .links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--sp-2xs) var(--sp-m);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    max-inline-size: var(--measure);
+  }
+
+  .links li {
+    margin-block-start: 0;
+  }
+
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-min);
+    font-weight: 700;
+  }
+</style>

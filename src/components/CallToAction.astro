@@ -1,0 +1,64 @@
+---
+import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
+
+interface Props {
+  /** Подпись приборного слоя над кнопками. */
+  label?: string;
+  /** Показывать строку графика под кнопками. */
+  showHours?: boolean;
+}
+
+const { label, showHours = true } = Astro.props;
+---
+
+<div class="cta">
+  {label && <p class="inst cta__label">{label}</p>}
+
+  <div class="cta__actions">
+    <a class="btn" href={telHref}>Позвонить&nbsp;{phoneDisplay}</a>
+    <a class="btn btn--ghost" href={business.telegram.url} rel="noopener">
+      Написать в {business.telegram.label}
+    </a>
+  </div>
+
+  {
+    showHours && (
+      <p class="cta__hours">
+        <span class="inst inst--muted">00:00–23:59</span>
+        <span>{openingHoursText}. {business.areaServedText}.</span>
+      </p>
+    )
+  }
+</div>
+
+<style>
+  .cta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-xs);
+  }
+
+  .cta__label {
+    margin: 0;
+  }
+
+  .cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2xs);
+  }
+
+  .cta__actions .btn {
+    flex: 1 1 15rem;
+  }
+
+  .cta__hours {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3xs) var(--sp-2xs);
+    margin: 0;
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+</style>

@@ -1,0 +1,361 @@
+---
+import Base from '../layouts/Base.astro';
+import CallToAction from '../components/CallToAction.astro';
+import ServiceCard from '../components/ServiceCard.astro';
+import { business, serviceGroups } from '../data/business.ts';
+import { articles } from '../data/articles.ts';
+import { graph, hvacBusiness } from '../lib/schema.ts';
+
+const title = 'Кондиционеры и котлы в Ташкенте — монтаж и ремонт';
+const description =
+  'Ровшан ставит, чистит и ремонтирует кондиционеры и котлы в Ташкенте. Работаю сам, круглосуточно. Пришлите фото в Telegram — назову цену за 10 минут.';
+
+/*
+ * Две группы: кондиционеры и котлы. Сезон из business.ts решает, какая идёт
+ * первой. Меняется порядок и акцент, а не состав.
+ */
+const groups = serviceGroups();
+
+/** Описания карточек — контент страницы, не данные о мастере. */
+const summaries: Record<string, string> = {
+  'ustanovka-konditsionera':
+    'Кронштейны, трасса, вальцовка, опрессовка азотом, вакуумирование, пуск и замер на выходе.',
+  'chistka-konditsionera':
+    'Испаритель, крыльчатка, фильтры, дренажная ванна и трасса. Ташкентская пыль забивает всё за один сезон.',
+  'zapravka-konditsionera-freonom':
+    'Сначала поиск утечки и опрессовка, потом фреон. R32 и R410A не смешиваются между собой.',
+  'remont-konditsionerov':
+    'Не морозит, течёт, шумит, сам выключается, показывает ошибку на дисплее.',
+  'obsluzhivanie-kotlov':
+    'Падает давление, тухнет, не греет воду, шумит. Накипь в теплообменнике и расширительный бак.',
+  'ustanovka-kotla':
+    'Монтаж, обвязка контура, дымоход, группа безопасности, опрессовка и пуск. Работаю с газовым оборудованием.',
+};
+
+const steps = [
+  {
+    title: 'Звонок или фото в Telegram',
+    text: 'Фотографии стены под внутренний блок и места под наружный хватает, чтобы назвать цену за десять минут. Выезд на замер для этого не нужен.',
+  },
+  {
+    title: 'Приезд и разметка',
+    text: 'Ищу проводку в стене до того, как включить перфоратор. Показываю, где именно встанут блоки и как пойдёт трасса, — и только потом сверлю.',
+  },
+  {
+    title: 'Блоки на месте',
+    text: 'Кронштейны по уровню, отверстие с уклоном наружу — чтобы конденсат уходил на улицу, а не по обоям.',
+  },
+  {
+    title: 'Трасса',
+    text: 'Резка по месту, вальцовка под нужный конус, соединения, короб, уклон дренажа не меньше трёх миллиметров на метр.',
+  },
+  {
+    title: 'Опрессовка, вакуум, пуск',
+    text: 'Система стоит под азотом, пока не станет видно, что она держит. Потом вакуумирование, запуск и замер температуры на выходе. Мусор увожу с собой.',
+  },
+];
+
+const jsonLd = graph([hvacBusiness()]);
+---
+
+<Base title={title} description={description} path="/" jsonLd={jsonLd}>
+  {/* ── Первый экран ─────────────────────────────────────────── */}
+  <section class="hero">
+    <div class="wrap">
+      <h1>Установка и обслуживание кондиционеров и котлов в Ташкенте</h1>
+
+      <p class="hero__lead">
+        Меня зовут {business.master.firstName}. Работаю сам, без бригады и посредников:
+        кто взял трубку — тот и приедет. Выезжаю по Ташкенту.
+      </p>
+
+      <div class="offer hero__offer">
+        <p class="inst hero__offer-label">Цена за 10 минут</p>
+        <p class="hero__offer-text">
+          Пришлите в Telegram фото стены под внутренний блок и места под наружный.
+          Отвечу ценой за десять минут — без выезда на замер.
+        </p>
+      </div>
+
+      {/*
+        На мобиле кнопки первого экрана не дублируются: те же два действия
+        постоянно висят в нижней полосе вызова, в зоне большого пальца.
+      */}
+      <div class="hero__cta">
+        <CallToAction showHours={false} />
+      </div>
+
+      <p class="hero__hours">
+        <span class="inst">00:00–23:59</span>
+        <span>Круглосуточно, без выходных</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="scale" role="presentation"></div>
+
+  {/* ── Услуги ───────────────────────────────────────────────── */}
+  <section class="section">
+    <div class="wrap">
+      <h2>Что я делаю</h2>
+      {
+        groups.map((group) => (
+          <div class="services">
+            <p class="inst services__label">{group.label}</p>
+            <div class="grid-cards">
+              {group.services.map((service) => (
+                <ServiceCard service={service} summary={summaries[service.slug] ?? ''} />
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <div class="scale" role="presentation"></div>
+
+  {/* ── Возражения ───────────────────────────────────────────── */}
+  <section class="section">
+    <div class="wrap objections">
+      <h2>Три вопроса, которые задают чаще всего</h2>
+
+      <article class="objection">
+        <h3>«В магазине монтаж бесплатный»</h3>
+        <p>
+          Бесплатный монтаж — это базовый комплект: пара кронштейнов, короткая трасса и
+          стандартное подключение. Обычно в него заложено около трёх метров трассы. Всё,
+          что дальше, считают отдельно, и узнаёте вы об этом на месте — когда коробка уже
+          вскрыта, а бригада стоит в коридоре. Отдельно идут штробление, короб, работа с
+          автовышки или с промальпом, зимний комплект, откачка и дозаправка фреона.
+          Я называю всё это до выезда, по фотографии.
+        </p>
+      </article>
+
+      <article class="objection">
+        <h3>«Непонятно, сколько выйдет в итоге»</h3>
+        <p>
+          Цена собирается из вещей, которые видно на снимке: этаж и есть ли доступ к
+          наружной стене, длина трассы от внутреннего блока до наружного, из чего стена,
+          нужно ли штробить, нужен ли короб, не висит ли место под блоком над окном соседа
+          или над проездом. Поэтому прайса на сайте нет: цифра «от» не говорит ничего, а
+          две фотографии говорят всё. Пришлите их в Telegram — отвечу за десять минут.
+        </p>
+      </article>
+
+      <article class="objection">
+        <h3>«Страшно за стену и за соседей снизу»</h3>
+        <p>
+          Сначала разметка и поиск проводки: сверлить вслепую нельзя. Отверстие идёт с
+          уклоном наружу, чтобы конденсат уходил на улицу. Трасса режется по месту, концы
+          развальцовываются под нужный конус — перетянутая вальцовка трескается не сразу,
+          а через два-три месяца, и искать такую утечку дороже, чем сделать сразу. Дальше
+          система стоит под азотом, пока не станет видно, что она держит давление. Потом
+          вакуумирование: оно убирает из трассы воздух и влагу, потому что влага вместе с
+          фреоном и маслом даёт кислоту, а кислота съедает обмотку компрессора. Дренаж
+          кладётся с уклоном не меньше трёх миллиметров на метр — иначе вода рано или
+          поздно найдёт дорогу к соседям.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <div class="scale" role="presentation"></div>
+
+  {/* ── Как проходит работа ──────────────────────────────────── */}
+  <section class="section">
+    <div class="wrap">
+      <h2>Как проходит работа</h2>
+      <ol class="steps">
+        {
+          steps.map((step, i) => (
+            <li class="step">
+              <span class="inst step__no">{String(i + 1).padStart(2, '0')}</span>
+              <div class="step__body">
+                <h3 class="step__title">{step.title}</h3>
+                <p class="step__text">{step.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <div class="scale" role="presentation"></div>
+
+  {/* ── Разборы ──────────────────────────────────────────────── */}
+  <section class="section">
+    <div class="wrap">
+      <h2>Разборы: что можно понять до вызова мастера</h2>
+      <p class="posts__lead">
+        Пять статей про то, что чаще всего спрашивают по телефону. Половина случаев
+        решается своими руками за пять минут — про это тоже написано.
+      </p>
+      <ul class="posts">
+        {
+          articles.map((a) => (
+            <li>
+              <a href={`/blog/${a.slug}/`}>{a.h1}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <div class="scale" role="presentation"></div>
+
+  {/* ── Финальный блок связи ─────────────────────────────────── */}
+  <section class="section">
+    <div class="wrap">
+      <h2>Позвоните или пришлите фото</h2>
+      <p class="final__text">
+        Если кондиционер не морозит или в котле упало давление — звоните сразу, разберём по
+        телефону, что можно проверить до выезда. Котёл потух ночью — звоните ночью, график
+        круглосуточный. Если нужен монтаж — отправьте фото, и я назову цену.
+      </p>
+      <CallToAction label="Ответ за 10 минут" />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-block: var(--sp-m) var(--sp-m);
+  }
+
+  @media (width >= 60rem) {
+    .hero {
+      padding-block-start: var(--sp-l);
+    }
+  }
+
+  .hero__lead {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-m);
+  }
+
+  .hero__offer {
+    margin-block-end: var(--sp-m);
+    max-inline-size: var(--measure);
+  }
+
+  .hero__offer-label {
+    margin-block: 0 var(--sp-3xs);
+  }
+
+  .hero__offer-text {
+    margin: 0;
+    font-size: var(--fs-300);
+  }
+
+  .hero__cta {
+    display: none;
+  }
+
+  @media (width >= 60rem) {
+    .hero__cta {
+      display: block;
+    }
+  }
+
+  .hero__hours {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3xs) var(--sp-2xs);
+    margin-block: var(--sp-m) 0;
+    font-weight: 700;
+  }
+
+  .services {
+    margin-block-start: var(--sp-m);
+  }
+
+  .services__label {
+    margin-block: 0 var(--sp-2xs);
+    padding-block-end: var(--sp-2xs);
+    border-block-end: 1px solid var(--c-rule);
+  }
+
+  .objections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+  }
+
+  .objection h3 {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-2xs);
+  }
+
+  .objection p {
+    margin: 0;
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+    max-inline-size: var(--measure);
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--sp-2xs);
+    align-items: start;
+  }
+
+  .step + .step {
+    margin-block-start: 0;
+  }
+
+  .step__no {
+    padding-block-start: 0.35rem;
+  }
+
+  .step__title {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-3xs);
+  }
+
+  .step__text {
+    margin: 0;
+  }
+
+  .posts__lead {
+    margin-block-end: var(--sp-s);
+  }
+
+  .posts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--sp-2xs) var(--sp-m);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    max-inline-size: var(--content-max);
+  }
+
+  .posts li {
+    margin-block-start: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 1px solid var(--c-rule);
+  }
+
+  .posts a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .final__text {
+    margin-block-end: var(--sp-m);
+  }
+</style>

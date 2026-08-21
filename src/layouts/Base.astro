@@ -1,0 +1,373 @@
+---
+import '../styles/tokens.css';
+import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
+import { absoluteUrl } from '../data/site.ts';
+
+interface Props {
+  /** ≤ 60 символов. */
+  title: string;
+  /** 140–160 символов. */
+  description: string;
+  /** Путь страницы со слэшем на конце: '/', '/kontakty/'. */
+  path: string;
+  /** Готовая строка JSON-LD из src/lib/schema.ts. Один слот на страницу. */
+  jsonLd?: string | undefined;
+  ogType?: 'website' | 'article';
+  /** Не индексировать (404). */
+  noindex?: boolean;
+}
+
+const { title, description, path, jsonLd, ogType = 'website', noindex = false } = Astro.props;
+const canonical = absoluteUrl(path);
+const ogImage = absoluteUrl('/og.png');
+
+/** Навигация строится из данных: ссылка появляется вместе со страницей. */
+const serviceLinks = business.services
+  .filter((s) => s.status === 'live')
+  .map((s) => ({ href: `/${s.slug}/`, label: s.name }));
+
+const pageLinks = [
+  ...serviceLinks,
+  { href: '/o-mastere/', label: 'О мастере' },
+  { href: '/blog/', label: 'Блог' },
+  { href: '/kontakty/', label: 'Контакты' },
+];
+---
+
+<!doctype html>
+<html lang="ru" data-season={business.season}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* Только display-начертание: им набран h1, он же LCP. */}
+    <link
+      rel="preload"
+      href="/fonts/golos-text-700.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={business.name} />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Перейти к содержанию</a>
+
+    <header class="site-header">
+      <div class="wrap site-header__inner">
+        <div class="site-header__top">
+          <a class="site-header__name" href="/">{business.name}</a>
+
+          <a class="site-header__phone" href={telHref}>
+            <span class="inst inst--muted site-header__label">Позвонить</span>
+            <span class="site-header__number">{phoneDisplay}</span>
+          </a>
+        </div>
+
+        {/*
+          Навигация в шапке — на десктопе. На мобильном её место занимает
+          полоса вызова: на телефоне сайт решает одну задачу, а не показывает меню.
+          Полный список ссылок есть в подвале каждой страницы.
+        */}
+        <nav class="site-nav" aria-label="Основная навигация">
+          <ul>
+            {
+              pageLinks.map((link) => (
+                <li>
+                  <a href={link.href} aria-current={path === link.href ? 'page' : undefined}>
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+      <div class="scale" role="presentation"></div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    {/*
+      Телефон в зоне большого пальца, виден всегда и на любой странице
+      (SPEC §8, CLAUDE.md). Только мобильный: на десктопе телефон в шапке.
+      position: fixed — в поток не входит, CLS не даёт.
+    */}
+    <div class="call-bar">
+      <a class="btn call-bar__btn" href={telHref}>Позвонить</a>
+      <a class="btn btn--ghost call-bar__btn" href={business.telegram.url} rel="noopener">
+        {business.telegram.label}
+      </a>
+    </div>
+
+    <footer class="site-footer">
+      <div class="wrap site-footer__inner">
+        <address class="site-footer__nap">
+          <p class="site-footer__name">{business.name}</p>
+          <p>
+            Мастер {business.master.firstName}, {business.address.addressLocality}.
+            {business.areaServedText}.
+          </p>
+          <p>
+            <a class="site-footer__link" href={telHref}>{phoneDisplay}</a>
+            <span aria-hidden="true"> · </span>
+            <a class="site-footer__link" href={business.telegram.url} rel="noopener">
+              {business.telegram.label}
+            </a>
+          </p>
+          <p class="inst site-footer__hours">00:00–23:59 · {openingHoursText}</p>
+        </address>
+
+        <nav class="site-footer__nav" aria-label="Все страницы">
+          <ul>
+            {
+              pageLinks.map((link) => (
+                <li>
+                  <a class="site-footer__link" href={link.href}>
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </footer>
+
+    <style>
+      /* ── Шапка ──────────────────────────────────────────────── */
+      .site-header {
+        background: var(--c-surface);
+      }
+
+      .site-header__inner {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-3xs);
+        padding-block: var(--sp-2xs);
+      }
+
+      .site-header__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-s);
+      }
+
+      .site-header__name {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: var(--tap-min);
+        color: var(--c-graphite);
+        font-size: var(--fs-300);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        text-decoration: none;
+      }
+
+      .site-nav {
+        display: none;
+      }
+
+      .site-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--sp-m);
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .site-nav li + li {
+        margin-block-start: 0;
+      }
+
+      .site-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: var(--tap-min);
+        font-size: var(--fs-100);
+        color: var(--c-muted);
+        text-decoration: none;
+      }
+
+      .site-nav a:hover {
+        color: var(--c-accent-hover);
+        text-decoration: underline;
+      }
+
+      .site-nav a[aria-current='page'] {
+        color: var(--c-graphite);
+        font-weight: 700;
+      }
+
+      .site-header__phone {
+        display: none;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        min-block-size: var(--tap-min);
+        padding-inline: var(--sp-3xs);
+        text-decoration: none;
+        color: var(--c-graphite);
+      }
+
+      .site-header__label {
+        line-height: 1.3;
+      }
+
+      @media (width >= 60rem) {
+        .site-nav,
+        .site-header__phone {
+          display: flex;
+        }
+
+        .site-header__inner {
+          padding-block: var(--sp-3xs) 0;
+        }
+
+        /* Ряд с навигацией отбит от строки с телефоном тонкой линией. */
+        .site-nav {
+          border-block-start: 1px solid var(--c-rule);
+        }
+      }
+
+      .site-header__number {
+        font-size: var(--fs-300);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .site-header__phone:hover .site-header__number {
+        color: var(--c-accent-hover);
+      }
+
+      /* ── Подвал: корпус прибора ─────────────────────────────── */
+      .site-footer {
+        margin-block-start: var(--sp-xl);
+        border-block-start: 3px solid var(--c-brass);
+        background: var(--c-graphite);
+        color: var(--c-dial);
+      }
+
+      .site-footer__inner {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-m) var(--sp-l);
+        justify-content: space-between;
+        padding-block: var(--sp-l);
+      }
+
+      .site-footer__nap p {
+        margin-block: 0 var(--sp-3xs);
+        font-size: var(--fs-100);
+      }
+
+      .site-footer__name {
+        font-size: var(--fs-200);
+        font-weight: 700;
+      }
+
+      /* Цель нажатия не меньше 24 px (WCAG 2.5.8). */
+      .site-footer__link {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 1.75rem;
+        color: var(--c-dial);
+        text-underline-offset: 0.2em;
+      }
+
+      .site-footer__link:hover {
+        color: var(--c-dial);
+        text-decoration-thickness: 2px;
+      }
+
+      /* Латунь не набирает текст (SPEC §11.4): она только в кромке сверху. */
+      .site-footer__hours {
+        color: var(--c-dial);
+        margin-block: var(--sp-2xs) 0;
+        padding-block-start: var(--sp-2xs);
+        border-block-start: 1px solid var(--c-brass);
+      }
+
+      /*
+       * min-inline-size: 0 обязателен: без него флекс-элемент имеет min-width: auto,
+       * auto-fit считается по max-content и раздвигает документ шире вьюпорта.
+       * minmax(min(100%, …)) страхует тот же случай со стороны грида.
+       */
+      .site-footer__nav {
+        min-inline-size: 0;
+      }
+
+      .site-footer__nav ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0 var(--sp-m);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+        font-size: var(--fs-100);
+      }
+
+      .site-footer__nav li + li {
+        margin-block-start: 0;
+      }
+
+      .site-footer :focus-visible {
+        outline-color: var(--c-brass);
+      }
+
+      /* ── Полоса вызова ──────────────────────────────────────── */
+      .call-bar {
+        position: fixed;
+        inset-inline: 0;
+        inset-block-end: 0;
+        z-index: 20;
+        display: flex;
+        gap: var(--sp-2xs);
+        padding: var(--sp-2xs) var(--sp-s);
+        padding-block-end: calc(var(--sp-2xs) + env(safe-area-inset-bottom, 0px));
+        background: var(--c-surface);
+        border-block-start: 3px solid var(--c-brass);
+      }
+
+      .call-bar__btn {
+        flex: 1;
+        min-inline-size: 0;
+        min-block-size: var(--tap-min);
+        padding-inline: var(--sp-2xs);
+        font-size: var(--fs-200);
+      }
+
+      @media (width >= 60rem) {
+        .call-bar {
+          display: none;
+        }
+      }
+    </style>
+  </body>
+</html>

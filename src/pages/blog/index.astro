@@ -1,0 +1,155 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CallToAction from '../../components/CallToAction.astro';
+import { articles } from '../../data/articles.ts';
+import { breadcrumbs, graph, hvacBusiness } from '../../lib/schema.ts';
+
+const path = '/blog/';
+const trail = [
+  { name: 'Главная', path: '/' },
+  { name: 'Блог', path },
+];
+
+const title = 'Кондиционеры и котлы: разборы мастера';
+const description =
+  'Разборы мастера по кондиционерам и котлам в Ташкенте: как выбрать мощность, почему течёт блок, что проверить самому и куда уходит давление из котла.';
+
+const jsonLd = graph([hvacBusiness(), breadcrumbs(trail)]);
+---
+
+<Base title={title} description={description} path={path} jsonLd={jsonLd}>
+  <div class="wrap page">
+    <Breadcrumbs trail={trail} />
+
+    <h1>Кондиционеры и котлы: разборы мастера</h1>
+
+    <p class="lead">
+      Пять разборов вместо тридцати статей. Каждый отвечает на один вопрос, который мне
+      задают по телефону чаще всего, и написан так, чтобы после него стало понятно, нужен
+      мастер или нет.
+    </p>
+
+    <ul class="posts">
+      {
+        articles.map((a) => (
+          <li class="card post">
+            <h2 class="post__title">
+              <a href={`/blog/${a.slug}/`}>{a.h1}</a>
+            </h2>
+            <p class="post__lede">{a.lede}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <section class="block">
+      <h2>Зачем это здесь</h2>
+      <p>
+        Часть вызовов снимается по телефону, а иногда и вовсе без мастера: промыть
+        фильтр, поправить режим на пульте, посмотреть, крутится ли вентилятор наружного
+        блока. Мне выгоднее, чтобы вы это знали: выезд ради забитого фильтра — потерянное
+        время для обоих, а разговор, после которого человек починил сам, запоминается
+        лучше любой рекламы.
+      </p>
+      <p>
+        Поэтому статьи написаны так, чтобы после них становилось понятно, нужен мастер
+        или нет. Где нужен — там прямо сказано, почему это не делается своими руками:
+        вакуумный насос, азот и манометрический коллектор дома не держат.
+      </p>
+
+      <section class="block">
+      <h2>Чего здесь нет</h2>
+      <p>
+        Обзоров моделей и советов, какой бренд лучше. Я не продаю технику, а ставлю и чиню
+        её, и рекомендация «берите вот эту марку» от монтажника всегда выглядит
+        подозрительно. Про мощность и подбор по площади написано, а про марки — нет.
+      </p>
+      <p>
+        Ещё здесь не будет тридцати статей. Пять — это то, что действительно спрашивают.
+        Всё остальное было бы текстом ради текста, а его в интернете и так достаточно.
+      </p>
+      </section>
+    </section>
+
+    <section class="block">
+      <h2>Не нашли свой случай?</h2>
+      <p>
+        Позвоните и опишите словами, что происходит. Разберём по телефону: если можно
+        обойтись без выезда, я так и скажу.
+      </p>
+      <CallToAction label="Ответ за 10 минут" />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-m);
+  }
+
+  .page h1 {
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .lead {
+    font-size: var(--fs-300);
+  }
+
+  .posts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-s);
+    max-inline-size: var(--measure);
+  }
+
+  .posts li {
+    margin-block-start: 0;
+  }
+
+  .post {
+    border-block-start: 3px solid var(--c-brass);
+  }
+
+  .post__title {
+    font-size: var(--fs-300);
+    margin-block-end: var(--sp-3xs);
+  }
+
+  .post__title a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.75rem;
+    text-decoration: none;
+  }
+
+  .post__title a:hover {
+    text-decoration: underline;
+  }
+
+  .post__lede {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-100);
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+  }
+
+  .block h2 {
+    font-size: var(--fs-400);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+</style>

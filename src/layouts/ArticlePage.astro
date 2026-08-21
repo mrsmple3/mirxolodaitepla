@@ -1,0 +1,178 @@
+---
+import Base from './Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CallToAction from '../components/CallToAction.astro';
+import { business } from '../data/business.ts';
+import type { Article } from '../data/articles.ts';
+import { blogPosting, breadcrumbs, graph, hvacBusiness } from '../lib/schema.ts';
+
+interface Props {
+  article: Article;
+}
+
+const { article } = Astro.props;
+
+const path = `/blog/${article.slug}/`;
+const trail = [
+  { name: 'Главная', path: '/' },
+  { name: 'Блог', path: '/blog/' },
+  { name: article.h1, path },
+];
+
+const service = business.services.find((s) => s.slug === article.relatedService);
+
+const published = new Date(article.datePublished).toLocaleDateString('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+const jsonLd = graph([
+  hvacBusiness(),
+  blogPosting({
+    headline: article.h1,
+    description: article.description,
+    path,
+    datePublished: article.datePublished,
+  }),
+  breadcrumbs(trail),
+]);
+---
+
+<Base
+  title={article.metaTitle}
+  description={article.description}
+  path={path}
+  jsonLd={jsonLd}
+  ogType="article"
+>
+  <article class="wrap post">
+    <Breadcrumbs trail={trail} />
+
+    <h1>{article.h1}</h1>
+
+    <p class="post__meta">
+      <span class="inst inst--muted">
+        <time datetime={article.datePublished}>{published}</time>
+      </span>
+      <span class="post__author">{business.master.firstName}, мастер по кондиционерам и котлам</span>
+    </p>
+
+    <div class="post__body">
+      <slot />
+    </div>
+
+    <section class="post__next">
+      <h2>Что делать дальше</h2>
+      <slot name="next" />
+      {
+        service && (
+          <p>
+            Подробнее про саму работу — на странице{' '}
+            <a href={`/${service.slug}/`}>«{service.name}»</a>.
+          </p>
+        )
+      }
+      <CallToAction label="Ответ за 10 минут" />
+    </section>
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding-block: var(--sp-m) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-s);
+  }
+
+  .post h1 {
+    margin-block: var(--sp-2xs) 0;
+    max-inline-size: var(--measure);
+  }
+
+  .post__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-3xs) var(--sp-2xs);
+    margin: 0;
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+  }
+
+  .post__author::before {
+    content: '· ';
+    color: var(--c-brass);
+  }
+
+  .post__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-s);
+  }
+
+  .post__body :global(h2) {
+    font-size: var(--fs-400);
+    margin-block: var(--sp-s) 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+
+  .post__body :global(h3) {
+    font-size: var(--fs-300);
+    margin-block: var(--sp-2xs) 0;
+  }
+
+  .post__body :global(p),
+  .post__body :global(ul),
+  .post__body :global(ol) {
+    margin: 0;
+  }
+
+  .post__body :global(table) {
+    border-collapse: collapse;
+    inline-size: 100%;
+    max-inline-size: var(--measure);
+    font-size: var(--fs-100);
+  }
+
+  .post__body :global(th),
+  .post__body :global(td) {
+    text-align: start;
+    padding: var(--sp-2xs) var(--sp-xs);
+    border-block-end: 1px solid var(--c-rule);
+  }
+
+  .post__body :global(th) {
+    font-size: var(--fs-100);
+    color: var(--c-muted);
+    border-block-end: 2px solid var(--c-brass);
+  }
+
+  .post__body :global(td:first-child) {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .post__body :global(.scroll) {
+    overflow-x: auto;
+  }
+
+  .post__next {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2xs);
+    margin-block-start: var(--sp-m);
+  }
+
+  .post__next h2 {
+    font-size: var(--fs-400);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-2xs);
+    border-block-start: 2px solid var(--c-brass);
+    max-inline-size: var(--measure);
+  }
+</style>
