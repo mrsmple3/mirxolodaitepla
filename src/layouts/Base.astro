@@ -3,7 +3,8 @@ import '../styles/tokens.css';
 import '../styles/motion.css';
 import Backdrop from '../components/Backdrop.astro';
 import Mark from '../components/Mark.astro';
-import { business, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
+import ServiceIcon from '../components/ServiceIcon.astro';
+import { business, serviceGroups, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
 import { absoluteUrl } from '../data/site.ts';
 
 interface Props {
@@ -29,8 +30,26 @@ const serviceLinks = business.services
   .filter((s) => s.status === 'live')
   .map((s) => ({ href: `/${s.slug}/`, label: s.name }));
 
+/*
+ * В подвале — весь список плоско: там место есть, и это единственная
+ * навигация, доступная с телефона.
+ */
 const pageLinks = [
   ...serviceLinks,
+  { href: '/o-mastere/', label: 'О мастере' },
+  { href: '/blog/', label: 'Блог' },
+  { href: '/kontakty/', label: 'Контакты' },
+];
+
+/*
+ * В шапке шесть услуг сворачиваются в одно меню, иначе навигация занимает
+ * две строки и шапка вырастает вдвое. Порядок групп ставит сезон — тот же,
+ * что на главной. Раскрытие на <details>, без единой строчки JS (CLAUDE.md).
+ */
+const menuGroups = serviceGroups();
+const onService = serviceLinks.some((l) => l.href === path);
+
+const topLinks = [
   { href: '/o-mastere/', label: 'О мастере' },
   { href: '/blog/', label: 'Блог' },
   { href: '/kontakty/', label: 'Контакты' },
@@ -91,17 +110,10 @@ const pageLinks = [
 
     <header class="site-header">
       <div class="wrap site-header__inner">
-        <div class="site-header__top">
-          <a class="site-header__name" href="/">
-            <Mark />
-            <span>{business.name}</span>
-          </a>
-
-          <a class="site-header__phone" href={telHref}>
-            <span class="inst inst--muted site-header__label">Круглосуточно</span>
-            <span class="site-header__number">{phoneDisplay}</span>
-          </a>
-        </div>
+        <a class="site-header__name" href="/">
+          <Mark />
+          <span>{business.name}</span>
+        </a>
 
         {/*
           Навигация в шапке — на десктопе. На мобильном её место занимает
@@ -109,9 +121,36 @@ const pageLinks = [
           Полный список ссылок есть в подвале каждой страницы.
         */}
         <nav class="site-nav" aria-label="Основная навигация">
-          <ul>
+          <details class:list={['menu', { 'menu--here': onService }]}>
+            <summary class="menu__summary">Услуги</summary>
+
+            <div class="menu__panel">
+              {
+                menuGroups.map((group) => (
+                  <div class="menu__group">
+                    <p class="inst menu__label">{group.label}</p>
+                    <ul>
+                      {group.services.map((s) => (
+                        <li>
+                          <a
+                            href={`/${s.slug}/`}
+                            aria-current={path === `/${s.slug}/` ? 'page' : undefined}
+                          >
+                            <ServiceIcon domain={s.domain} />
+                            <span>{s.name}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              }
+            </div>
+          </details>
+
+          <ul class="site-nav__list">
             {
-              pageLinks.map((link) => (
+              topLinks.map((link) => (
                 <li>
                   <a href={link.href} aria-current={path === link.href ? 'page' : undefined}>
                     {link.label}
@@ -121,6 +160,16 @@ const pageLinks = [
             }
           </ul>
         </nav>
+
+        {/*
+          Телефон оформлен портом коллектора, а не строкой текста: латунная
+          кромка сверху, хайрлайн по контуру, цифры моноширинной. Это тот же
+          объект, что плитки контактов, — шапка перестаёт быть набором надписей.
+        */}
+        <a class="site-header__phone" href={telHref}>
+          <span class="inst inst--muted site-header__label">Круглосуточно</span>
+          <span class="site-header__number">{phoneDisplay}</span>
+        </a>
       </div>
       <div class="scale" role="presentation"></div>
     </header>
@@ -180,6 +229,12 @@ const pageLinks = [
 
     <style>
       /* ── Шапка ──────────────────────────────────────────────── */
+      /*
+       * Одна строка, а не две. Раньше шесть услуг и три страницы шли плоским
+       * списком, он переносился на второй ряд, и шапка занимала под 140 px —
+       * рыхлая полоса текста над каждой страницей. Услуги свёрнуты в меню,
+       * знак и порт телефона дают строке два опорных объекта.
+       */
       .site-header {
         position: relative;
         z-index: 10;
@@ -201,16 +256,10 @@ const pageLinks = [
 
       .site-header__inner {
         display: flex;
-        flex-direction: column;
-        gap: var(--sp-3xs);
-        padding-block: var(--sp-2xs);
-      }
-
-      .site-header__top {
-        display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: var(--sp-s);
+        gap: var(--sp-m);
+        padding-block: var(--sp-2xs);
       }
 
       .site-header__name {
@@ -229,20 +278,24 @@ const pageLinks = [
         color: var(--c-graphite);
       }
 
+      /* ── Навигация ──────────────────────────────────────────── */
       .site-nav {
         display: none;
+        align-items: center;
+        gap: var(--sp-m);
+        margin-inline-start: auto;
       }
 
-      .site-nav ul {
+      .site-nav__list {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0 var(--sp-m);
+        align-items: center;
+        gap: var(--sp-m);
         list-style: none;
         margin: 0;
         padding: 0;
       }
 
-      .site-nav li + li {
+      .site-nav__list li + li {
         margin-block-start: 0;
       }
 
@@ -250,7 +303,8 @@ const pageLinks = [
        * Подчёркивание — отдельная кромка, а не text-decoration: она умеет
        * выезжать слева направо и не дёргает базовую линию при наведении.
        */
-      .site-nav a {
+      .site-nav a,
+      .menu__summary {
         position: relative;
         display: inline-flex;
         align-items: center;
@@ -260,7 +314,8 @@ const pageLinks = [
         text-decoration: none;
       }
 
-      .site-nav a::after {
+      .site-nav__list a::after,
+      .menu__summary::before {
         content: '';
         position: absolute;
         inset-block-end: 0.55rem;
@@ -272,37 +327,169 @@ const pageLinks = [
         transition: scale var(--dur-base) var(--ease-out);
       }
 
-      .site-nav a:hover {
+      .menu__summary::before {
+        inset-inline-end: 1rem;
+      }
+
+      .site-nav a:hover,
+      .menu__summary:hover {
         color: var(--c-accent-hover);
       }
 
-      .site-nav a:hover::after {
+      .site-nav__list a:hover::after,
+      .menu__summary:hover::before {
         scale: 1 1;
       }
 
-      .site-nav a[aria-current='page'] {
+      .site-nav__list a[aria-current='page'] {
         color: var(--c-graphite);
         font-weight: 700;
       }
 
-      .site-nav a[aria-current='page']::after {
+      .site-nav__list a[aria-current='page']::after {
         background: var(--c-brass);
         scale: 1 1;
       }
 
+      /* ── Меню услуг: <details>, ноль JS ─────────────────────── */
+      .menu {
+        position: relative;
+      }
+
+      .menu__summary {
+        gap: var(--sp-3xs);
+        padding-inline-end: 1rem;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .menu__summary::-webkit-details-marker {
+        display: none;
+      }
+
+      /* Шеврон рисуется руками: display: flex снимает нативный маркер. */
+      .menu__summary::after {
+        content: '';
+        position: absolute;
+        inset-inline-end: 0.1rem;
+        inline-size: 0.4em;
+        block-size: 0.4em;
+        border-inline-end: 2px solid var(--c-brass);
+        border-block-end: 2px solid var(--c-brass);
+        rotate: 45deg;
+        translate: 0 -0.15em;
+        transition: rotate var(--dur-fast) var(--ease-out);
+      }
+
+      .menu[open] .menu__summary::after {
+        rotate: -135deg;
+        translate: 0 0.1em;
+      }
+
+      /* Открытая страница услуги подсвечивает само меню. */
+      .menu--here .menu__summary {
+        color: var(--c-graphite);
+        font-weight: 700;
+      }
+
+      .menu--here .menu__summary::before {
+        background: var(--c-brass);
+        scale: 1 1;
+      }
+
+      .menu__panel {
+        position: absolute;
+        inset-block-start: calc(100% + var(--sp-2xs));
+        inset-inline-start: 50%;
+        translate: -50% 0;
+        z-index: 5;
+        display: flex;
+        gap: var(--sp-l);
+        padding: var(--sp-s) var(--sp-m) var(--sp-m);
+        background: var(--c-surface);
+        border: 1px solid var(--c-rule);
+        border-block-start: 3px solid var(--c-brass);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-2);
+      }
+
+      .menu__group {
+        min-inline-size: 0;
+      }
+
+      .menu__label {
+        margin-block: 0 var(--sp-2xs);
+        padding-block-end: var(--sp-2xs);
+        border-block-end: 1px solid var(--c-rule);
+      }
+
+      .menu__panel ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .menu__panel li + li {
+        margin-block-start: 0;
+      }
+
+      .menu__panel a {
+        gap: var(--sp-2xs);
+        min-block-size: 2.25rem;
+        white-space: nowrap;
+        color: var(--c-graphite);
+      }
+
+      .menu__panel a:hover {
+        color: var(--c-accent-hover);
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+      }
+
+      .menu__panel a[aria-current='page'] {
+        font-weight: 700;
+      }
+
+      /* ── Порт телефона ──────────────────────────────────────── */
       .site-header__phone {
         display: none;
         flex-direction: column;
         align-items: flex-end;
         justify-content: center;
-        min-block-size: var(--tap-min);
-        padding-inline: var(--sp-3xs);
+        gap: 0;
+        padding: var(--sp-3xs) var(--sp-xs);
+        border: 1px solid var(--c-rule);
+        border-block-start: 2px solid var(--c-brass);
+        border-radius: var(--radius);
         text-decoration: none;
         color: var(--c-graphite);
+        transition:
+          border-color var(--dur-fast) var(--ease-out),
+          box-shadow var(--dur-base) var(--ease-out);
+      }
+
+      .site-header__phone:hover {
+        border-color: var(--c-accent);
+        border-block-start-color: var(--c-accent);
+        box-shadow: var(--shadow-1);
       }
 
       .site-header__label {
         line-height: 1.3;
+      }
+
+      .site-header__number {
+        font-family: var(--font-inst);
+        font-size: var(--fs-200);
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        line-height: 1.25;
+      }
+
+      .site-header__phone:hover .site-header__number {
+        color: var(--c-accent-hover);
       }
 
       @media (width >= 60rem) {
@@ -310,25 +497,6 @@ const pageLinks = [
         .site-header__phone {
           display: flex;
         }
-
-        .site-header__inner {
-          padding-block: var(--sp-3xs) 0;
-        }
-
-        /* Ряд с навигацией отбит от строки с телефоном тонкой линией. */
-        .site-nav {
-          border-block-start: 1px solid var(--c-rule);
-        }
-      }
-
-      .site-header__number {
-        font-size: var(--fs-300);
-        font-weight: 700;
-        white-space: nowrap;
-      }
-
-      .site-header__phone:hover .site-header__number {
-        color: var(--c-accent-hover);
       }
 
       /* ── Подвал: корпус прибора ─────────────────────────────── */
