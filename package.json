@@ -9,6 +9,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "brand": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/make-brand.mjs",
+    "prebuild": "npm run brand",
+    "prebuild:check": "npm run brand",
     "build:check": "SITE_URL=http://localhost:4321 astro build",
     "preview": "astro preview",
     "typecheck": "astro check",
@@ -20,11 +23,14 @@
     "lh": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/lighthouse.mjs",
     "seo": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/seo-table.mjs",
     "selftest": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/selftest-checks.mjs",
-    "verify": "npm run build:check && npm run html && npm run links && npm run schema && npm run words && npm run viewport && npm run lh && npm run build"
+    "verify": "npm run build:check && npm run html && npm run links && npm run schema && npm run words && npm run viewport && npm run lh && npm run build",
+    "live": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/check-live.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.2.4"
+    "astro": "^7.2.4",
+    "fontkitten": "^1.0.3",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

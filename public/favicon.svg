@@ -1,7 +1,6 @@
-<!-- Заглушка. Настоящий знак — шаг 2 (дизайн). -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Мир холода и тепла">
-  <rect width="32" height="32" rx="6" fill="#0a5ca8"/>
-  <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
-    <path d="M16 6v20M7.3 11l17.4 10M7.3 21l17.4-10"/>
-  </g>
-</svg>
+<!-- Собрано scripts/make-brand.mjs из scripts/brand/marks.mjs. Правки — там. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Мир холода и тепла"><defs><clipPath id="plate-kontur"><rect width="32" height="32" rx="6"/></clipPath></defs><g clip-path="url(#plate-kontur)"><g fill="#F4F6F7"><rect width="32" height="32" rx="6"/></g>
+  <g fill="none" stroke-width="6" stroke-linecap="butt">
+    <path d="M9.5 0v11.5a4.5 4.5 0 0 0 4.5 4.5H16" stroke="#191E23"/>
+    <path d="M16 16h2a4.5 4.5 0 0 1 4.5 4.5V32" stroke="#0B5AA6"/>
+  </g></g></svg>
