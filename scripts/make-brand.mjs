@@ -34,6 +34,45 @@ const icon = (size, bleed = false) =>
 const written = [];
 const record = (name) => written.push([name, statSync(out(name)).size]);
 
+/**
+ * Сборка .ico из готовых PNG.
+ *
+ * Формат ICO с 2003 года разрешает класть внутрь целый PNG вместо BMP, и все
+ * живые браузеры это читают. Поэтому кодировщик тут — заголовок плюс таблица
+ * записей: ни библиотеки, ни зависимости ради шести файлов не нужно.
+ *
+ * Зачем вообще .ico, когда в <head> объявлены и SVG, и PNG: за `/favicon.ico`
+ * ходят по умолчанию, не читая разметку, — часть краулеров, читалок и старых
+ * клиентов. Без файла они получали 404, а на этом сайте 404 отдаёт целую
+ * страницу в 37 КБ. Теперь получают иконку.
+ */
+function icoFromPngs(images) {
+  const HEADER = 6;
+  const ENTRY = 16;
+  const header = Buffer.alloc(HEADER);
+  header.writeUInt16LE(0, 0); // reserved
+  header.writeUInt16LE(1, 2); // 1 = icon
+  header.writeUInt16LE(images.length, 4);
+
+  let offset = HEADER + ENTRY * images.length;
+  const entries = [];
+  for (const { size, data } of images) {
+    const e = Buffer.alloc(ENTRY);
+    // 256 пишется нулём — в один байт оно не влезает. У нас максимум 48.
+    e.writeUInt8(size >= 256 ? 0 : size, 0);
+    e.writeUInt8(size >= 256 ? 0 : size, 1);
+    e.writeUInt8(0, 2); // палитра не используется
+    e.writeUInt8(0, 3); // reserved
+    e.writeUInt16LE(1, 4); // цветовых плоскостей
+    e.writeUInt16LE(32, 6); // бит на пиксель
+    e.writeUInt32LE(data.length, 8);
+    e.writeUInt32LE(offset, 12);
+    entries.push(e);
+    offset += data.length;
+  }
+  return Buffer.concat([header, ...entries, ...images.map((i) => i.data)]);
+}
+
 // ── Векторная иконка: её берут все современные браузеры ────────────────
 writeFileSync(
   out('favicon.svg'),
@@ -44,12 +83,12 @@ writeFileSync(
 record('favicon.svg');
 
 // ── Растровые запасные ────────────────────────────────────────────────
-await sharp(Buffer.from(markSvg({ accent, size: 32 })))
-  .flatten({ background: palette.dial })
-  .png({ compressionLevel: 9, palette: true, effort: 10 })
-  .toFile(out('favicon-32.png'));
-record('favicon-32.png');
-
+/*
+ * Отдельного файла на 48 px нет намеренно: 48 лежит внутри favicon.ico,
+ * а для поиска Google просит квадрат со стороной, кратной 48, — эту роль
+ * играет icon-192.png, на него и ссылается <head>. 32 и 180 под правило
+ * не подходят и в поиск не предлагаются.
+ */
 await icon(180, true);
 record('apple-touch-icon.png');
 
@@ -58,6 +97,24 @@ record('icon-192.png');
 
 await icon(512);
 record('icon-512.png');
+
+// ── favicon.ico: за ним ходят по умолчанию, не читая <head> ────────────
+writeFileSync(
+  out('favicon.ico'),
+  icoFromPngs(
+    await Promise.all(
+      [16, 32, 48].map(async (size) => ({
+        size,
+        data: await sharp(Buffer.from(markSvg({ accent, size })))
+          .resize(size, size)
+          .flatten({ background: palette.dial })
+          .png({ compressionLevel: 9, effort: 10 })
+          .toBuffer(),
+      })),
+    ),
+  ),
+);
+record('favicon.ico');
 
 // ── Манифест ──────────────────────────────────────────────────────────
 const manifest = {
