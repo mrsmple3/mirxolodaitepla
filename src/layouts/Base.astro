@@ -5,7 +5,7 @@ import Backdrop from '../components/Backdrop.astro';
 import Mark from '../components/Mark.astro';
 import ServiceIcon from '../components/ServiceIcon.astro';
 import { business, serviceGroups, telHref, phoneDisplay, openingHoursText } from '../data/business.ts';
-import { absoluteUrl } from '../data/site.ts';
+import { absoluteUrl, GOOGLE_TAG_ID } from '../data/site.ts';
 
 interface Props {
   /** ≤ 60 символов. */
@@ -59,6 +59,15 @@ const topLinks = [
 <!doctype html>
 <html lang="ru" data-season={business.season}>
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`}></script>
+    <script
+      is:inline
+      set:html={`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GOOGLE_TAG_ID}');`}
+    />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
@@ -616,5 +625,21 @@ const topLinks = [
         }
       }
     </style>
+
+    {/*
+      Конверсия Google Ads по клику на телефон и мессенджеры. Один слушатель
+      на document, переход по ссылке не блокируется. Метку подставит заказчик.
+    */}
+    <script is:inline>
+      (function () {
+        const CONVERSION_LABEL = 'AW-18405480299/TODO';
+        const SELECTOR = 'a[href^="tel:"], a[href^="https://t.me/"], a[href^="https://wa.me/"]';
+        document.addEventListener('click', function (e) {
+          const link = e.target instanceof Element ? e.target.closest(SELECTOR) : null;
+          if (!link || typeof window.gtag !== 'function') return;
+          window.gtag('event', 'conversion', { send_to: CONVERSION_LABEL });
+        });
+      })();
+    </script>
   </body>
 </html>

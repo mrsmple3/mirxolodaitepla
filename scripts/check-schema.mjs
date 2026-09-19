@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'node-html-parser';
 
 import { business, isTodo } from '../src/data/business.ts';
+import { GOOGLE_TAG_ID } from '../src/data/site.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 /** По умолчанию dist; каталог можно переопределить — этим пользуется selftest. */
@@ -425,11 +426,27 @@ function checkLandmarks(file, root) {
   }
 }
 
+/**
+ * Тег Google — единственное разрешённое исключение (решение заказчика, CLAUDE.md):
+ * загрузчик gtag.js, инлайн-конфиг и отправка конверсии — ровно с GOOGLE_TAG_ID
+ * из src/data/site.ts.
+ */
+function isGoogleTag(s) {
+  const src = s.getAttribute('src');
+  if (src) return src === `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`;
+  const code = s.textContent.trim();
+  const isConfig = code.startsWith('window.dataLayer') && code.includes(`gtag('config', '${GOOGLE_TAG_ID}')`);
+  const isConversion =
+    code.includes(`CONVERSION_LABEL = '${GOOGLE_TAG_ID}/`) && code.includes("gtag('event', 'conversion'");
+  return isConfig || isConversion;
+}
+
 /** Zero client-side JS (CLAUDE.md, SPEC §8) и ни одного внешнего запроса из HTML. */
 function checkNoClientJs(file, root) {
   const scripts = root
     .querySelectorAll('script')
-    .filter((s) => (s.getAttribute('type') ?? '') !== 'application/ld+json');
+    .filter((s) => (s.getAttribute('type') ?? '') !== 'application/ld+json')
+    .filter((s) => !isGoogleTag(s));
   expect(
     scripts.length === 0,
     file,

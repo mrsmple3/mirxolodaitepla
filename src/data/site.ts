@@ -22,3 +22,10 @@ export const PRODUCTION_SITE_ORIGIN = PRODUCTION_ORIGIN;
 export function absoluteUrl(path: string): string {
   return new URL(path, `${SITE_ORIGIN}/`).href;
 }
+
+/**
+ * Тег Google (Google Ads). Единственный разрешённый клиентский JS на сайте —
+ * по прямому решению заказчика. Ставится в <head> каждой страницы через Base.astro;
+ * scripts/check-schema.mjs пропускает только его и только с этим ID.
+ */
+export const GOOGLE_TAG_ID = 'AW-18405480299';
